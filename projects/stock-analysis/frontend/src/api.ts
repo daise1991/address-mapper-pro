@@ -1,5 +1,13 @@
 const TOKEN_KEY = "stock-app-token";
 
+// start.bat が開く URL（/#token=...）からトークンを受け取り、保存してアドレスバーから消す
+(function captureTokenFromHash() {
+  const m = location.hash.match(/token=([^&]+)/);
+  if (!m) return;
+  setToken(decodeURIComponent(m[1]));
+  history.replaceState(null, "", location.pathname + location.search);
+})();
+
 export function getToken(): string {
   try {
     return localStorage.getItem(TOKEN_KEY) ?? "";

@@ -68,6 +68,18 @@ CREATE TABLE IF NOT EXISTS financials (
     PRIMARY KEY (code, fiscal_period_end, period_type, disclosed_at)
 );
 
+-- 決算短信サマリーに無い項目を有価証券報告書（EDINET XBRL）から補完する
+CREATE TABLE IF NOT EXISTS edinet_balance (
+    code TEXT NOT NULL,
+    period_end TEXT NOT NULL,          -- 決算期末
+    interest_bearing_debt REAL,        -- 借入金・社債・CPの合計（リース債務は除く）
+    components TEXT,                   -- 内訳 JSON（要素ID→金額）
+    doc_id TEXT NOT NULL,
+    source TEXT NOT NULL,
+    fetched_at TEXT NOT NULL,
+    PRIMARY KEY (code, period_end)
+);
+
 CREATE TABLE IF NOT EXISTS disclosures (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     code TEXT NOT NULL,

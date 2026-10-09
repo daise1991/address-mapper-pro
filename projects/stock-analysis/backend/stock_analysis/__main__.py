@@ -6,6 +6,7 @@
   python -m stock_analysis scheduler            15:55〜23:59 の間 N分おきに run-daily を呼ぶ常駐ループ
   python -m stock_analysis backfill --start D --end D [--step 5]  過去スコアの再計算（参考値）
   python -m stock_analysis serve [--host 127.0.0.1 --port 8000]
+  python -m stock_analysis run-all [--host 127.0.0.1 --port 8000]   Webアプリ＋スケジューラを1プロセスで常駐（Windows のログオン時起動用）
 """
 from __future__ import annotations
 
@@ -59,8 +60,35 @@ def cmd_demo(args: argparse.Namespace) -> None:
     print(f"demo: {len(codes)}銘柄, 採点 {n}日分, 検証 {m}件")
 
 
+def scheduler_loop() -> None:
+    """15:55〜23:59 の間、一定間隔で run_daily を呼ぶ。例外で止まらないようにする。"""
+    from .pipeline import run_daily
+    s = get_settings()
+    provider = make_provider()
+    while True:
+        now = datetime.now(JST)
+        if time(15, 55) <= now.time() <= time(23, 59):
+            conn = connect()
+            try:
+                log.info("run_daily: %s", run_daily(conn, provider, now=now))
+            except Exception:  # noqa: BLE001
+                log.exception("run_daily で予期しないエラー")
+            finally:
+                conn.close()
+        _time.sleep(s.retry_interval_min * 60 if now.time() >= time(16, 0) else 60)
+
+
+def setup_logging(log_file: str | None) -> None:
+    handlers: list[logging.Handler] = [logging.StreamHandler()]
+    if log_file:
+        from logging.handlers import RotatingFileHandler
+        from pathlib import Path
+        Path(log_file).parent.mkdir(parents=True, exist_ok=True)
+        handlers.append(RotatingFileHandler(log_file, maxBytes=2_000_000, backupCount=3, encoding="utf-8"))
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", handlers=handlers)
+
+
 def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     ap = argparse.ArgumentParser(prog="stock_analysis")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("init")
@@ -77,7 +105,15 @@ def main() -> None:
     sv = sub.add_parser("serve")
     sv.add_argument("--host", default="127.0.0.1")
     sv.add_argument("--port", type=int, default=8000)
+    eb = sub.add_parser("edinet-backfill", help="過去の有価証券報告書から有利子負債を取り込む（1日あたり約3秒）")
+    eb.add_argument("--days", type=int, default=400)
+    ra = sub.add_parser("run-all")
+    ra.add_argument("--host", default="127.0.0.1")
+    ra.add_argument("--port", type=int, default=8000)
+    ap.add_argument("--log-file", help="ログをファイルにも出力（run-all は既定で data/app.log）")
     args = ap.parse_args()
+    log_file = args.log_file or (str(get_settings().db_path.parent / "app.log") if args.cmd in ("run-all", "scheduler") else None)
+    setup_logging(log_file)
 
     if args.cmd == "init":
         conn = connect()
@@ -91,18 +127,7 @@ def main() -> None:
         d0 = date.fromisoformat(args.date) if args.date else None
         print(json.dumps(run_daily(conn, make_provider(), d0, ignore_schedule=args.now), ensure_ascii=False, indent=2))
     elif args.cmd == "scheduler":
-        from .pipeline import run_daily
-        s = get_settings()
-        provider = make_provider()
-        while True:
-            now = datetime.now(JST)
-            if time(15, 55) <= now.time() <= time(23, 59):
-                conn = connect()
-                try:
-                    log.info("run_daily: %s", run_daily(conn, provider, now=now))
-                finally:
-                    conn.close()
-            _time.sleep(s.retry_interval_min * 60 if now.time() >= time(16, 0) else 60)
+        scheduler_loop()
     elif args.cmd == "backfill":
         from .verification import backfill_scores, compute_forward_returns
         conn = connect()
@@ -110,6 +135,27 @@ def main() -> None:
         print(f"{n}日分を再計算、検証 {compute_forward_returns(conn)}件")
     elif args.cmd == "serve":
         import uvicorn
+        uvicorn.run("stock_analysis.api:app", host=args.host, port=args.port)
+    elif args.cmd == "edinet-backfill":
+        from .providers.edinet import EdinetClient, sync_annual_reports
+        from .universe import active_codes
+        conn = connect()
+        client = EdinetClient()
+        codes = set(active_codes(conn))
+        end = datetime.now(JST).date()
+        total = 0
+        for i in range(args.days):
+            d = end - timedelta(days=i)
+            docs = [x for x in client.disclosures_for(codes, d, d)]
+            total += sync_annual_reports(conn, client, docs)
+        print(f"有価証券報告書 {total}件から有利子負債を取り込みました")
+    elif args.cmd == "run-all":
+        import threading
+
+        import uvicorn
+        connect().close()
+        threading.Thread(target=scheduler_loop, name="scheduler", daemon=True).start()
+        log.info("Webアプリ http://%s:%s とスケジューラを起動しました", args.host, args.port)
         uvicorn.run("stock_analysis.api:app", host=args.host, port=args.port)
 
 

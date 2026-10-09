@@ -24,9 +24,15 @@ def _load_dotenv(path: Path) -> None:
 _load_dotenv(BASE_DIR / ".env")
 
 
+def _db_path() -> Path:
+    # 相対パスは backend ディレクトリ基準（タスクスケジューラ等で作業フォルダが変わっても同じDBを使う）
+    p = Path(os.environ.get("STOCK_DB_PATH", BASE_DIR / "data" / "stock.db"))
+    return p if p.is_absolute() or str(p) == ":memory:" else (BASE_DIR / p).resolve()
+
+
 @dataclass(frozen=True)
 class Settings:
-    db_path: Path = field(default_factory=lambda: Path(os.environ.get("STOCK_DB_PATH", BASE_DIR / "data" / "stock.db")))
+    db_path: Path = field(default_factory=_db_path)
     # "jquants" | "demo"。demo は合成データで、本番DBと混在させない。
     data_mode: str = field(default_factory=lambda: os.environ.get("STOCK_DATA_MODE", "demo"))
     jquants_api_key: str | None = field(default_factory=lambda: os.environ.get("JQUANTS_API_KEY"))

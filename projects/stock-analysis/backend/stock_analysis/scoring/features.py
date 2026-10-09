@@ -72,6 +72,13 @@ def build_features(
         fy_rows.append(dict(r))
     v = f.values
     v.update(indicators)
+    for row in fy_rows[:2]:
+        if row["interest_bearing_debt"] is None:
+            eb = conn.execute("SELECT interest_bearing_debt, doc_id FROM edinet_balance WHERE code=? AND period_end=?",
+                              (code, row["fiscal_period_end"])).fetchone()
+            if eb and eb["interest_bearing_debt"] is not None:
+                row["interest_bearing_debt"] = eb["interest_bearing_debt"]
+                f.sources.append(f"edinet:{eb['doc_id']}")
     if fy_rows:
         cur = fy_rows[0]
         prev = fy_rows[1] if len(fy_rows) > 1 else None

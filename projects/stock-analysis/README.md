@@ -15,8 +15,9 @@ projects/stock-analysis/
 │   │   ├── portfolio.py     保有・余力・資金配分・翌営業日S株注文案
 │   │   ├── notify.py        Web Push（iPhone/PC）
 │   │   └── api.py           REST API ＋ フロント配信
-│   └── tests/          pytest（53件）
+│   └── tests/          pytest（56件）
 ├── frontend/           React + Vite + TypeScript（PWA）
+├── scripts/            Windows 用 setup / start / stop / register-task（.bat をダブルクリック）
 └── docs/data-sources.md  データ提供元の調査結果
 ```
 
@@ -31,6 +32,9 @@ projects/stock-analysis/
 
 ## セットアップ（Windows）
 
+> 手順だけ知りたい場合は [`はじめに.md`](はじめに.md) を参照。`scripts\setup.bat` → `start.bat` → `register-task.bat` の順にダブルクリックで完了する。
+> 以下は手動で行う場合の手順。
+
 ```powershell
 cd C:\Augma\company-system\projects\stock-analysis\backend
 py -3.12 -m venv .venv; .\.venv\Scripts\Activate.ps1
@@ -43,6 +47,8 @@ npm ci; npm run build     # dist を backend が同一オリジンで配信
 
 cd ..\backend
 python -m stock_analysis serve          # http://127.0.0.1:8000
+python -m stock_analysis run-all        # Webアプリ＋自動分析を1プロセスで常駐（ログ: data\app.log）
+python -m stock_analysis edinet-backfill --days 400   # 過去の有価証券報告書から有利子負債を取り込み（約20分）
 ```
 
 画面確認だけならデモデータを使えます。デモは**必ず別DBに入れてください**。
@@ -54,7 +60,7 @@ python -m stock_analysis demo; python -m stock_analysis serve
 
 ### 自動実行（タスク スケジューラ）
 
-次のどちらかで設定します。
+`scripts\register-task.bat` を実行すると、ログオン時に `run-all`（Webアプリ＋自動分析）を起動するタスク「StockAnalysis」が登録されます。手動で設定する場合は次のどちらかです。
 
 - **A: 常駐ループ**
   - ログオン時に `python -m stock_analysis scheduler` を起動します。
@@ -181,7 +187,6 @@ Web Push（VAPID）を使います。
 ## 未実装・次の段階
 
 1. **J-Quants V2 の項目名照合**: 財務サマリーは V2 の短縮カラム名で実装しました。実キーでレスポンスを確認し、`PATHS`・項目名を確定させます（旧名でも読めるようにしてあります）。
-2. **EDINET XBRL の取り込み**: 有利子負債、受注、事業別の利益（セグメント）、増資の詳細を XBRL/CSV から取り込みます。
+2. **EDINET XBRL の取り込み**: 有利子負債は有価証券報告書の CSV から取り込み済み（`edinet_balance`）。受注・事業別の利益（セグメント）・増資の詳細は未対応です。
 3. **TDnet 適時開示の取得**: J-Quants の TDnet アドオン（月11,000円）を使うか、代わりに EDINET 臨時報告書で補います。
 4. **ETF の評価**: NAV 乖離での評価を追加します。
-5. **GitHub Actions**: pytest とビルドの CI を追加します。

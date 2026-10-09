@@ -62,9 +62,10 @@ def _edinet_disclosures(conn: sqlite3.Connection, d: date, codes: list[str], run
     s = get_settings()
     if not s.edinet_api_key:
         return
-    from .providers.edinet import EdinetClient
+    from .providers.edinet import EdinetClient, sync_annual_reports
+    client = EdinetClient(s)
     try:
-        docs = EdinetClient(s).disclosures_for(set(codes), d, d)
+        docs = client.disclosures_for(set(codes), d, d)
     except DataUnavailable as e:
         conn.execute("INSERT INTO fetch_log (run_id, source, target, status, message, fetched_at) VALUES (?,?,?,?,?,?)",
                      (run_tag, "edinet", d.isoformat(), "unavailable", str(e), now_iso()))
@@ -75,6 +76,7 @@ def _edinet_disclosures(conn: sqlite3.Connection, d: date, codes: list[str], run
         by_code.setdefault(doc["code"], []).append(doc)
     for code, items in by_code.items():
         ingest_disclosures(conn, None, code, d, d, rows=items, source="edinet")  # type: ignore[arg-type]
+    sync_annual_reports(conn, client, docs)  # 有価証券報告書が出ていれば有利子負債を補完
 
 
 def do_fetch(conn: sqlite3.Connection, provider: Provider, d: date, now: datetime) -> tuple[str, str]:
