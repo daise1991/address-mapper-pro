@@ -2,7 +2,7 @@
 
 セキュリティ:
 - STOCK_APP_TOKEN を設定すると /api/* は `Authorization: Bearer <token>` 必須
-- トークン未設定時はループバック（127.0.0.1 / ::1）からのアクセスのみ許可
+- トークン未設定時はループバック（127.0.0.1 / ::1）からの直接アクセスのみ許可（トンネル経由は拒否）
 - 秘密情報（APIキー・VAPID秘密鍵）は API で返さない
 """
 from __future__ import annotations
@@ -27,7 +27,7 @@ from .portfolio import order_plan, positions
 from .scoring.rules import BUY_LABELS, EXIT_LABELS, SELL_LABELS, RuleSet
 from .scoring.valuation import CATEGORY_DEFAULTS, Assumption
 from .universe import CATEGORIES, seed_universe
-from .verification import HORIZONS, summary
+from .verification import BENCHMARKS, HORIZONS, improvement_report, summary
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):  # type: ignore[no-untyped-def]
@@ -48,6 +48,9 @@ def get_db() -> Iterator[sqlite3.Connection]:
         conn.close()
 
 
+PROXY_HEADERS = ("cf-connecting-ip", "cf-ray", "x-forwarded-for", "x-real-ip", "forwarded")
+
+
 @app.middleware("http")
 async def auth(request: Request, call_next):  # type: ignore[no-untyped-def]
     if request.url.path.startswith("/api/") and request.url.path not in ("/api/health",):
@@ -56,8 +59,12 @@ async def auth(request: Request, call_next):  # type: ignore[no-untyped-def]
             given = request.headers.get("authorization", "").removeprefix("Bearer ").strip()
             if not hmac.compare_digest(given, token):
                 return JSONResponse({"detail": "unauthorized"}, status_code=401)
-        elif request.client and request.client.host not in ("127.0.0.1", "::1", "testclient"):
-            return JSONResponse({"detail": "STOCK_APP_TOKEN 未設定のためローカルからのみ利用できます"}, status_code=403)
+        else:
+            # トンネル（Cloudflare 等）経由の通信は送信元が 127.0.0.1 に見えるため、転送ヘッダーで外部からと判定する
+            proxied = any(h in request.headers for h in PROXY_HEADERS)
+            local = request.client is not None and request.client.host in ("127.0.0.1", "::1", "testclient")
+            if proxied or not local:
+                return JSONResponse({"detail": "STOCK_APP_TOKEN 未設定のため、このPCからのみ利用できます"}, status_code=403)
     resp = await call_next(request)
     resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["Referrer-Policy"] = "no-referrer"
@@ -82,7 +89,7 @@ def meta() -> dict[str, Any]:
     return {
         "buy_labels": BUY_LABELS, "sell_labels": SELL_LABELS, "exit_labels": EXIT_LABELS,
         "categories": {k: v["label"] for k, v in CATEGORY_DEFAULTS.items()},
-        "category_defaults": CATEGORY_DEFAULTS, "horizons": HORIZONS,
+        "category_defaults": CATEGORY_DEFAULTS, "horizons": HORIZONS, "benchmarks": BENCHMARKS,
     }
 
 
@@ -309,9 +316,56 @@ def put_rules(body: dict[str, Any], db: sqlite3.Connection = Depends(get_db)) ->
     return {"ok": True}
 
 
+@app.get("/api/settings/weights")
+def get_weights(db: sqlite3.Connection = Depends(get_db)) -> dict[str, Any]:
+    from .scoring import growth, sell
+    from .analysis import load_weights
+    cur = load_weights(db)
+    return {
+        "growth": {k: {"label": growth.LABELS[k], "default": v, "current": cur["growth"].get(k, v)} for k, v in growth.WEIGHTS.items()},
+        "sell": {k: {"label": sell.LABELS[k], "default": v, "current": cur["sell"].get(k, v)} for k, v in sell.WEIGHTS.items()},
+        "customized": bool(cur["growth"] or cur["sell"]),
+        "note": get_setting(db, "weights_note"),
+    }
+
+
+class WeightsIn(BaseModel):
+    growth: dict[str, float] = {}
+    sell: dict[str, float] = {}
+    note: str = Field(min_length=4, description="変更理由（例: 従来配点に合わせる）")
+
+
+@app.put("/api/settings/weights")
+def put_weights(body: WeightsIn, db: sqlite3.Connection = Depends(get_db)) -> dict[str, Any]:
+    from .scoring import growth, sell
+    for name, given, base in (("growth", body.growth, growth.WEIGHTS), ("sell", body.sell, sell.WEIGHTS)):
+        unknown = set(given) - set(base)
+        if unknown:
+            raise HTTPException(400, f"{name} に不明な観点: {sorted(unknown)}")
+        if any(v < 0 for v in given.values()):
+            raise HTTPException(400, "重みは0以上")
+        if given and sum({**base, **given}.values()) <= 0:
+            raise HTTPException(400, f"{name} の重みの合計が0です")
+    set_setting(db, "growth_weights", body.growth)
+    set_setting(db, "sell_weights", body.sell)
+    set_setting(db, "weights_note", {"note": body.note, "updated_at": now_iso()})
+    db.commit()
+    return {"ok": True, "message": "次回の採点から反映されます。計算方式のバージョンが変わり、変更前の結果は保存されます。"}
+
+
 @app.get("/api/verification")
-def get_verification(horizon: int = 60, live_only: bool = False, db: sqlite3.Connection = Depends(get_db)) -> dict[str, Any]:
-    return summary(db, horizon, live_only, load_rules(db))
+def get_verification(horizon: int = 60, live_only: bool = False, benchmark: str = "universe",
+                     method_version: str | None = None, db: sqlite3.Connection = Depends(get_db)) -> dict[str, Any]:
+    if benchmark not in BENCHMARKS:
+        raise HTTPException(400, "benchmark が不正")
+    return summary(db, horizon, live_only, load_rules(db), benchmark, method_version)
+
+
+@app.get("/api/verification/report")
+def get_improvement_report(benchmark: str = "TOPIX", db: sqlite3.Connection = Depends(get_db)) -> dict[str, Any]:
+    if benchmark not in BENCHMARKS:
+        raise HTTPException(400, "benchmark が不正")
+    return improvement_report(db, load_rules(db), benchmark)
 
 
 @app.get("/api/jobs")

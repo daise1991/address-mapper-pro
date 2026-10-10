@@ -39,7 +39,7 @@ def cmd_demo(args: argparse.Namespace) -> None:
     s = get_settings()
     if s.data_mode != "demo":
         raise SystemExit("demo は STOCK_DATA_MODE=demo のときのみ実行できます（本番DBへの混入防止）")
-    from .ingest import ingest_disclosures, ingest_financials, ingest_quotes
+    from .ingest import ingest_disclosures, ingest_financials, ingest_quotes, ingest_topix
     from .providers.demo import DemoProvider
     from .verification import backfill_scores, compute_forward_returns
 
@@ -52,6 +52,7 @@ def cmd_demo(args: argparse.Namespace) -> None:
         ingest_quotes(conn, p, c, p.history_start, end)
         ingest_financials(conn, p, c)
         ingest_disclosures(conn, p, c, end - timedelta(days=120), end)
+    ingest_topix(conn, p, p.history_start, end)
     n = backfill_scores(conn, end - timedelta(days=400), end, step=10)
     from .analysis import run_scoring
     from .market_calendar import is_business_day, previous_business_day
@@ -105,6 +106,9 @@ def main() -> None:
     sv = sub.add_parser("serve")
     sv.add_argument("--host", default="127.0.0.1")
     sv.add_argument("--port", type=int, default=8000)
+    sub.add_parser("gen-vapid", help="プッシュ通知用の鍵を生成して backend/.env に保存（未設定時のみ）")
+    sub.add_parser("test-push", help="登録済みの端末にテスト通知を送る")
+    sub.add_parser("check", help="J-Quants / EDINET の接続チェック（キー設定後に最初に実行）")
     eb = sub.add_parser("edinet-backfill", help="過去の有価証券報告書から有利子負債を取り込む（1日あたり約3秒）")
     eb.add_argument("--days", type=int, default=400)
     ra = sub.add_parser("run-all")
@@ -136,6 +140,23 @@ def main() -> None:
     elif args.cmd == "serve":
         import uvicorn
         uvicorn.run("stock_analysis.api:app", host=args.host, port=args.port)
+    elif args.cmd == "gen-vapid":
+        from .config import BASE_DIR
+        from .notify import write_vapid_to_env
+        print(write_vapid_to_env(BASE_DIR / ".env"))
+    elif args.cmd == "test-push":
+        from .notify import notify
+        conn = connect()
+        n = conn.execute("SELECT COUNT(*) FROM push_subscriptions").fetchone()[0]
+        sent = notify(conn, "test", "テスト通知", "株分析アプリからの通知テストです", "/")
+        print(f"登録端末 {n}台中 {sent}台に送信しました" + ("" if n else "（先に画面の『この端末で通知を受け取る』を押してください）"))
+    elif args.cmd == "check":
+        from .checks import run_all
+        results = run_all()
+        for r in results:
+            print(f"[{r['status']:^4}] {r['name']}: {r['detail']}")
+        ng = [r for r in results if r["status"] in ("NG", "要確認")]
+        print("\n" + ("問題ありません。" if not ng else f"{len(ng)}件の確認事項があります。この表示を Claude に貼り付けて相談してください。"))
     elif args.cmd == "edinet-backfill":
         from .providers.edinet import EdinetClient, sync_annual_reports
         from .universe import active_codes

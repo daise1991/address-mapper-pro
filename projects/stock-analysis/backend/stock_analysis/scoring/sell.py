@@ -96,28 +96,31 @@ def factor_scores(f: Features, v_over_p: float | None, growth_drop: float | None
     }
 
 
-def _wavg(factors: dict[str, float | None], keys: set[str]) -> float | None:
-    items = [(WEIGHTS[k], v) for k, v in factors.items() if k in keys and v is not None]
+def _wavg(factors: dict[str, float | None], keys: set[str], W: dict[str, float]) -> float | None:
+    items = [(W[k], v) for k, v in factors.items() if k in keys and v is not None and W[k] > 0]
     if not items:
         return None
     return sum(w * v for w, v in items) / sum(w for w, _ in items)
 
 
-def sell_score(f: Features, v_over_p: float | None, growth_drop: float | None = None) -> dict[str, Any]:
+def sell_score(f: Features, v_over_p: float | None, growth_drop: float | None = None,
+               weights: dict[str, float] | None = None) -> dict[str, Any]:
+    """weights で観点ごとの重みを上書きできる（settings の sell_weights。0 でその観点を使わない）。"""
+    W = {**WEIGHTS, **(weights or {})}
     factors = factor_scores(f, v_over_p, growth_drop)
-    avail = {k: v for k, v in factors.items() if v is not None}
-    coverage = sum(WEIGHTS[k] for k in avail) / sum(WEIGHTS.values())
+    avail = {k: v for k, v in factors.items() if v is not None and W[k] > 0}
+    coverage = sum(W[k] for k in avail) / (sum(W.values()) or 1)
     score = None
     if coverage >= MIN_COVERAGE:
-        base = sum(WEIGHTS[k] * v for k, v in avail.items()) / sum(WEIGHTS[k] for k in avail)
+        base = sum(W[k] * v for k, v in avail.items()) / sum(W[k] for k in avail)
         # 下方修正・増資などのイベント要因が強い場合は平均で薄めない
         crit = max((v for k, v in avail.items() if k in CRITICAL), default=0.0)
         score = round_half_up(max(base, crit * 0.8) if crit >= 80 else base)
     return {
         "score": score,
         "coverage": round(coverage, 2),
-        "valuation_side": None if (x := _wavg(factors, VALUATION_SIDE)) is None else round(x, 1),
-        "fundamental_side": None if (y := _wavg(factors, FUNDAMENTAL_SIDE)) is None else round(y, 1),
-        "factors": {k: {"label": LABELS[k], "score": None if v is None else round(v, 1), "weight": WEIGHTS[k]}
+        "valuation_side": None if (x := _wavg(factors, VALUATION_SIDE, W)) is None else round(x, 1),
+        "fundamental_side": None if (y := _wavg(factors, FUNDAMENTAL_SIDE, W)) is None else round(y, 1),
+        "factors": {k: {"label": LABELS[k], "score": None if v is None else round(v, 1), "weight": W[k]}
                     for k, v in factors.items()},
     }

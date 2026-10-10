@@ -4,6 +4,13 @@ import { Decision, ErrorBox, fmt, Score, useApi } from "../ui";
 
 type Resp = { run_date: string | null; dates: string[]; items: ScoreRow[] };
 type SortKey = "growth_score" | "buy_score" | "sell_score" | "code" | "upside";
+const VIEWS: [SortKey, string][] = [
+  ["buy_score", "買い点数ランキング"],
+  ["sell_score", "売り点数ランキング"],
+  ["growth_score", "成長期待ランキング"],
+  ["upside", "狙い目買値と株価の比較"],
+  ["code", "60銘柄（コード順）"],
+];
 
 export default function Rankings({ meta, onOpen }: { meta: Meta; onOpen: (c: string) => void }) {
   const [date, setDate] = useState<string>("");
@@ -37,6 +44,11 @@ export default function Rankings({ meta, onOpen }: { meta: Meta; onOpen: (c: str
       <h2>ランキング {data?.run_date && <span className="muted">（{data.run_date} 大引け）</span>}</h2>
       <ErrorBox error={error} />
       <div className="row">
+        {VIEWS.map(([k, label]) => (
+          <button key={k} className={sort === k ? "active" : ""} onClick={() => setSort(k)}>{label}</button>
+        ))}
+      </div>
+      <div className="row">
         <select value={date} onChange={(e) => setDate(e.target.value)} aria-label="採点日">
           <option value="">最新</option>
           {data?.dates.map((d) => (
@@ -64,8 +76,9 @@ export default function Rankings({ meta, onOpen }: { meta: Meta; onOpen: (c: str
               {th("buy_score", "買い")}
               {th("sell_score", "売り")}
               <th>理論価値</th>
-              <th>狙い目</th>
-              {th("upside", "乖離")}
+              <th>狙い目買値</th>
+              <th>狙い目まで</th>
+              {th("upside", "理論価値との差")}
               <th className="l">購入判定</th>
               <th className="l">売却判定</th>
             </tr>
@@ -86,6 +99,9 @@ export default function Rankings({ meta, onOpen }: { meta: Meta; onOpen: (c: str
                 <td><Score v={r.sell_score} kind="sell" /></td>
                 <td>{fmt(r.theoretical_value)}</td>
                 <td>{fmt(r.target_price)}</td>
+                <td style={{ color: r.target_price && r.price && r.price <= r.target_price ? "var(--good)" : undefined }}>
+                  {r.target_price && r.price ? (r.price <= r.target_price ? "到達" : `あと${((1 - r.target_price / r.price) * 100).toFixed(0)}%下落`) : "—"}
+                </td>
                 <td>{r.theoretical_value && r.price ? `${(((r.theoretical_value / r.price) - 1) * 100).toFixed(0)}%` : "—"}</td>
                 <td className="l"><Decision type="buy" value={r.buy_decision} labels={meta.buy_labels} /></td>
                 <td className="l">
@@ -97,7 +113,7 @@ export default function Rankings({ meta, onOpen }: { meta: Meta; onOpen: (c: str
           </tbody>
         </table>
       </div>
-      <p className="muted">「自」= 評価前提が自動初期推計（会社予想ベース）。銘柄詳細で根拠付きの前提に置き換えてください。買い点数にカーソルを合わせると係数150の比較値を表示します。</p>
+      <p className="muted">成長期待点・売り点数の配点は「通知・システム → 配点設定」で確認・変更できます。「自」= 評価前提が自動初期推計（会社予想ベース）。銘柄詳細で根拠付きの前提に置き換えてください。買い点数にカーソルを合わせると係数150の比較値を表示します。</p>
     </div>
   );
 }

@@ -63,10 +63,14 @@ if ($LASTEXITCODE) { Fail "画面のビルドに失敗しました" }
 Step "5/5 データベースを準備"
 Set-Location $Backend
 & .\.venv\Scripts\python.exe -m stock_analysis init
+& .\.venv\Scripts\python.exe -m stock_analysis gen-vapid
 $envText = Get-Content ".env" -Raw -Encoding UTF8
 if ($envText -match "STOCK_DATA_MODE=demo") {
     Write-Host "デモデータを作成中…"
     & .\.venv\Scripts\python.exe -m stock_analysis demo
+} else {
+    Write-Host "J-Quants / EDINET への接続を確認中…"
+    & .\.venv\Scripts\python.exe -m stock_analysis check
 }
 
 Write-Host "`n完了しました。start.bat をダブルクリックすると画面が開きます。" -ForegroundColor Green

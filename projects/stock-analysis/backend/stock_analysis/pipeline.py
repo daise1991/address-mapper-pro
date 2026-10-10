@@ -22,12 +22,12 @@ from typing import Any
 from .analysis import run_scoring
 from .config import JST, get_settings
 from .db import get_setting, now_iso, rows, set_setting
-from .ingest import (backfill_start, detect_gaps, ingest_disclosures, ingest_financials, ingest_quotes,
-                     quotes_complete, sync_calendar, verify_listings)
-from .market_calendar import is_business_day
+from .ingest import (backfill_start, detect_gaps, ingest_disclosures, ingest_financials, ingest_financials_by_date,
+                     ingest_quotes, ingest_quotes_bulk, ingest_topix, quotes_complete, sync_calendar, verify_listings)
+from .market_calendar import business_days, is_business_day, previous_business_day
 from .notify import notify
 from .providers.base import DataUnavailable, Provider
-from .universe import active_codes
+from .universe import CODE_PREDECESSORS, active_codes
 from .verification import compute_forward_returns, summary
 
 STAGES: list[tuple[str, time]] = [
@@ -79,6 +79,51 @@ def _edinet_disclosures(conn: sqlite3.Connection, d: date, codes: list[str], run
     sync_annual_reports(conn, client, docs)  # 有価証券報告書が出ていれば有利子負債を補完
 
 
+def fetch_quotes(conn: sqlite3.Connection, provider: Provider, codes: list[str], d: date, tag: str) -> None:
+    """履歴がある銘柄は日付指定の一括取得、新規・長期欠損の銘柄は銘柄ごとに過去分から取得する。"""
+    last = {r["code"]: r["d"] for r in conn.execute("SELECT code, MAX(date) AS d FROM daily_quotes GROUP BY code")}
+    recent_cut = (d - timedelta(days=14)).isoformat()
+    per_code = [c for c in codes if not last.get(c) or last[c] < recent_cut]
+    bulk = [c for c in codes if c not in per_code]
+    if bulk:
+        start = min(date.fromisoformat(last[c]) for c in bulk) + timedelta(days=1)
+        for day in business_days(start, d, conn):
+            targets = [c for c in bulk if last[c] < day.isoformat()]
+            missing = ingest_quotes_bulk(conn, provider, targets, day, tag)
+            if missing is None:  # 一括取得に非対応
+                per_code += bulk
+                break
+    for code in dict.fromkeys(per_code):
+        start = backfill_start(conn, code, d, years=5)
+        if code in CODE_PREDECESSORS:  # コード変更銘柄は切替日より前を旧コードで取得して連結
+            old, since = CODE_PREDECESSORS[code]
+            switch = date.fromisoformat(since)
+            if start < switch:
+                ingest_quotes(conn, provider, code, start, switch - timedelta(days=1), tag, fetch_code=old)
+                start = switch
+        ingest_quotes(conn, provider, code, start, d, tag)
+    # 週1回、直近5営業日を取り直して取引所側の訂正を反映する（日付指定の一括取得で5回のみ）
+    last_refresh = get_setting(conn, "quotes_refreshed")
+    if bulk and (not last_refresh or date.fromisoformat(last_refresh) <= d - timedelta(days=7)):
+        recent = business_days(d - timedelta(days=10), d - timedelta(days=1), conn)[-5:]
+        if all(ingest_quotes_bulk(conn, provider, bulk, day, tag) is not None for day in recent):
+            set_setting(conn, "quotes_refreshed", d.isoformat())
+            conn.commit()
+    # 当日に分割・併合があった銘柄は調整後終値を全期間で取り直す
+    for r in conn.execute("SELECT code FROM daily_quotes WHERE date=? AND adjustment_factor!=1.0", (d.isoformat(),)).fetchall():
+        ingest_quotes(conn, provider, r["code"], d - timedelta(days=365 * 5), d, tag)
+
+
+def fetch_financials(conn: sqlite3.Connection, provider: Provider, codes: list[str], d: date, tag: str) -> None:
+    """決算は開示日単位で一括取得（前営業日分も再取得し、18時以降に確定した速報を拾う）。未取得の銘柄は全履歴を取得。"""
+    have = {r["code"] for r in conn.execute("SELECT DISTINCT code FROM financials")}
+    days = [previous_business_day(d, conn), d]
+    supported = all(ingest_financials_by_date(conn, provider, codes, day, tag) for day in days)
+    for code in codes:
+        if not supported or code not in have:
+            ingest_financials(conn, provider, code, tag)
+
+
 def do_fetch(conn: sqlite3.Connection, provider: Provider, d: date, now: datetime) -> tuple[str, str]:
     codes = active_codes(conn)
     tag = f"{d.isoformat()}:fetch"
@@ -91,16 +136,17 @@ def do_fetch(conn: sqlite3.Connection, provider: Provider, d: date, now: datetim
         if verify_listings(conn, provider, codes, tag):
             set_setting(conn, "listings_verified", d.isoformat())
             conn.commit()
-    for code in codes:
-        ingest_quotes(conn, provider, code, backfill_start(conn, code, d), d, tag)
+    fetch_quotes(conn, provider, codes, d, tag)
     complete, missing = quotes_complete(conn, codes, d)
     if not complete:
         deadline = time.fromisoformat(get_settings().data_deadline)
         if now.time() >= deadline:
             return "delayed", f"確定終値が未取得: {', '.join(missing)}"
         return "waiting", f"確定終値待ち（{len(missing)}銘柄）: {', '.join(missing[:10])}"
+    fetch_financials(conn, provider, codes, d, tag)
+    last_topix = conn.execute("SELECT MAX(date) FROM benchmark_quotes WHERE name='TOPIX'").fetchone()[0]
+    ingest_topix(conn, provider, date.fromisoformat(last_topix) if last_topix else d - timedelta(days=365 * 5), d, tag)
     for code in codes:
-        ingest_financials(conn, provider, code, tag)
         ingest_disclosures(conn, provider, code, d - timedelta(days=7), d, tag)
         detect_gaps(conn, code, d - timedelta(days=30), d)
     _edinet_disclosures(conn, d, codes, tag)
@@ -132,8 +178,13 @@ def do_publish(conn: sqlite3.Connection, d: date) -> str:
             f"{s['name']}(売{s['sell_score']}・{'利確' if s['exit_type'] == 'profit_taking' else '撤退' if s['exit_type'] == 'stop_loss' else '再評価'})"
             for s in sells[:5]))
     body = " / ".join(lines)
-    notify(conn, "daily", f"{d.isoformat()} 大引け後分析", body, "/")
-    return body
+    from . import alerts
+    if alerts.record_new(conn, d, [{"kind": "daily", "code": None, "key": f"daily:{d.isoformat()}", "message": body}]):
+        notify(conn, "daily", f"{d.isoformat()} 大引け後分析", body, "/")
+    fresh = alerts.record_new(conn, d, alerts.detect(conn, d))
+    if fresh:
+        notify(conn, "alert", f"{d.isoformat()} 注目アラート {len(fresh)}件", alerts.format_body(fresh), "/")
+    return body + (f" / アラート{len(fresh)}件" if fresh else "")
 
 
 def run_daily(conn: sqlite3.Connection, provider: Provider, d: date | None = None, now: datetime | None = None,

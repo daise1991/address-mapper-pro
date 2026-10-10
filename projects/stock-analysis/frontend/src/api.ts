@@ -75,7 +75,14 @@ export type ScoreRow = {
   exit_type: string | null;
   growth_detail: { coverage: number; factors: Record<string, Factor> };
   sell_detail: { coverage?: number; valuation_side?: number; fundamental_side?: number; factors: Record<string, Factor> };
-  buy_detail: { reason: string; method: string; v_over_p: number | null; years: number | null; assumption_origin: string };
+  buy_detail: {
+    reason: string; method: string; v_over_p: number | null; years: number | null; assumption_origin: string;
+    inputs?: {
+      target_year: number; fiscal_month_end: number; eps_forecast?: number | null; normalized_eps?: number | null;
+      assumed_per?: number | null; required_return: number; safety_margin: number; reason: string;
+    };
+  };
+  method_version?: string | null;
   indicators: Record<string, number | null> & { sources?: string[] };
 };
 
@@ -86,4 +93,5 @@ export type Meta = {
   categories: Record<string, string>;
   category_defaults: Record<string, { required_return: number; safety_margin: number; label: string }>;
   horizons: number[];
+  benchmarks: Record<string, string>;
 };

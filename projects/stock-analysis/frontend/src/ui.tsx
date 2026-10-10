@@ -75,3 +75,27 @@ export function PriceChart({ quotes }: { quotes: { date: string; close: number |
     </svg>
   );
 }
+
+type ScorePoint = { run_date: string; growth_score: number | null; buy_score: number | null; sell_score: number | null };
+
+export function ScoreHistory({ scores }: { scores: ScorePoint[] }) {
+  const pts = [...scores].sort((a, b) => a.run_date.localeCompare(b.run_date));
+  if (pts.length < 2) return <p className="muted">点数の履歴がまだありません（毎営業日たまっていきます）</p>;
+  const W = 600;
+  const H = 160;
+  const x = (i: number) => (i / (pts.length - 1)) * W;
+  const y = (v: number) => H - (v / 100) * (H - 10) - 5;
+  const line = (k: keyof Omit<ScorePoint, "run_date">) =>
+    pts.map((p, i) => (p[k] === null ? "" : `${i === 0 || pts[i - 1][k] === null ? "M" : "L"}${x(i).toFixed(1)},${y(p[k] as number).toFixed(1)}`)).join("");
+  return (
+    <>
+      <svg className="chart" style={{ height: 160 }} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label="点数の推移">
+        {[25, 50, 75].map((v) => <line key={v} x1="0" x2={W} y1={y(v)} y2={y(v)} stroke="var(--line)" strokeWidth="1" />)}
+        <path d={line("growth_score")} fill="none" stroke="var(--accent)" strokeWidth="1.5" />
+        <path d={line("buy_score")} fill="none" stroke="var(--good)" strokeWidth="1.5" />
+        <path d={line("sell_score")} fill="none" stroke="var(--bad)" strokeWidth="1.5" />
+      </svg>
+      <p className="muted">{pts[0].run_date} 〜 {pts[pts.length - 1].run_date} ／ 青: 成長期待 ／ 緑: 買い ／ 赤: 売り（目盛り 25・50・75点）</p>
+    </>
+  );
+}

@@ -5,9 +5,14 @@ type Plan = {
   score_date: string | null;
   execution: string;
   spendable_cash: number;
+  monthly_budget: number;
+  month_spent: number;
+  month_left: number;
+  plan_budget: number;
+  s_kabu_note: string;
   buy_orders: {
     code: string; name: string; decision: string; growth_score: number; buy_score: number; sell_score: number;
-    last_close: number; target_price: number | null; quantity: number; estimated_amount: number; note: string;
+    last_close: number; target_price: number | null; upper_limit_price: number; quantity: number; estimated_amount: number; note: string;
   }[];
   skipped: { code: string; name: string; reason: string }[];
   sell_reviews: { code: string; name: string; quantity: number; sell_score: number; decision: string; exit_type: string | null; est_tax_if_sold: number }[];
@@ -56,16 +61,19 @@ export default function Candidates({ meta, onOpen }: { meta: Meta; onOpen: (c: s
         <h2>翌営業日 S株 注文案</h2>
         {plan.data && (
           <>
-            <p>約定見込み: <b>{plan.data.execution}</b> ／ 買付可能額（現金留保後）: <b>{fmt(plan.data.spendable_cash)}円</b></p>
+            <p>約定見込み: <b>{plan.data.execution}</b></p>
+            <p>今月の投資予算 {fmt(plan.data.monthly_budget)}円 − 今月の購入済み {fmt(plan.data.month_spent)}円 ＝ 残り <b>{fmt(plan.data.month_left)}円</b>
+              ／ 買付余力（現金留保後） {fmt(plan.data.spendable_cash)}円 → 今回の上限 <b>{fmt(plan.data.plan_budget)}円</b></p>
+            <div className="banner warn">{plan.data.s_kabu_note}</div>
             {plan.data.buy_orders.length === 0 ? <p className="muted">購入候補なし、または買付余力不足</p> : (
               <div className="table-wrap"><table>
-                <thead><tr><th className="l">銘柄</th><th className="l">区分</th><th>終値</th><th>狙い目</th><th>株数</th><th>概算金額</th><th className="l">メモ</th></tr></thead>
+                <thead><tr><th className="l">銘柄</th><th className="l">区分</th><th>終値</th><th>狙い目</th><th>購入許容上限</th><th>株数</th><th>概算金額</th><th className="l">メモ</th></tr></thead>
                 <tbody>
                   {plan.data.buy_orders.map((o) => (
                     <tr key={o.code}>
                       <td className="l"><b>{o.code}</b> {o.name}</td>
                       <td className="l"><Decision type="buy" value={o.decision} labels={meta.buy_labels} /></td>
-                      <td>{fmt(o.last_close, 1)}</td><td>{fmt(o.target_price)}</td>
+                      <td>{fmt(o.last_close, 1)}</td><td>{fmt(o.target_price)}</td><td><b>{fmt(o.upper_limit_price, 1)}</b></td>
                       <td>{o.quantity}</td><td>{fmt(o.estimated_amount)}</td><td className="l muted">{o.note}</td>
                     </tr>
                   ))}
@@ -88,6 +96,9 @@ export default function Candidates({ meta, onOpen }: { meta: Meta; onOpen: (c: s
                   </tbody>
                 </table></div>
               </>
+            )}
+            {plan.data.skipped.length > 0 && (
+              <p className="muted">見送り: {plan.data.skipped.map((x) => `${x.name}（${x.reason}）`).join("、")}</p>
             )}
             <p className="muted">{plan.data.disclaimer}</p>
           </>

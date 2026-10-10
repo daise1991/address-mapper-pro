@@ -50,7 +50,9 @@ def auto_baseline(conn: sqlite3.Connection, code: str, as_of: date) -> Assumptio
     ).fetchone()
     if not fy:
         return None
-    base_eps = fy["forecast_eps"] or fy["eps"]
+    from .scoring.features import latest_forecast
+    lf = latest_forecast(conn, code, fy["fiscal_period_end"], f"{as_of.isoformat()}T23:59:59+09:00")
+    base_eps = (lf and lf["forecast_eps"]) or fy["forecast_eps"] or fy["eps"]
     if base_eps is None or base_eps <= 0:
         return None
     cat = sec["category"]

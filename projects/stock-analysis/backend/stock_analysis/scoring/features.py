@@ -47,6 +47,20 @@ def _cutoff(as_of: date) -> str:
     return datetime.combine(as_of, time(23, 59, 59), JST).isoformat()
 
 
+FORECAST_FIELDS = ("forecast_revenue", "forecast_operating_profit", "forecast_net_income", "forecast_eps", "forecast_dividend")
+
+
+def latest_forecast(conn: sqlite3.Connection, code: str, after_fy_end: str, cutoff: str) -> dict[str, Any] | None:
+    """after_fy_end より後の決算期を対象とする、cutoff 時点で最新の会社予想（四半期決算・予想修正を含む）。"""
+    r = conn.execute(
+        f"""SELECT {', '.join(FORECAST_FIELDS)}, forecast_fy_end, disclosed_at, source FROM financials
+            WHERE code=? AND forecast_fy_end>? AND disclosed_at<=?
+              AND (forecast_operating_profit IS NOT NULL OR forecast_eps IS NOT NULL)
+            ORDER BY forecast_fy_end ASC, disclosed_at DESC LIMIT 1""",
+        (code, after_fy_end, cutoff)).fetchone()
+    return dict(r) if r else None
+
+
 def build_features(
     conn: sqlite3.Connection,
     code: str,
@@ -83,6 +97,10 @@ def build_features(
         cur = fy_rows[0]
         prev = fy_rows[1] if len(fy_rows) > 1 else None
         f.sources.append(f"{cur['source']}:{cur['fiscal_period_end']}@{cur['disclosed_at']}")
+        lf = latest_forecast(conn, code, cur["fiscal_period_end"], cutoff)
+        if lf and lf["disclosed_at"] > cur["disclosed_at"]:  # 本決算後に予想が更新されていれば最新を使う
+            cur.update({k: lf[k] for k in FORECAST_FIELDS if lf[k] is not None})
+            f.sources.append(f"{lf['source']}:予想{lf['forecast_fy_end']}@{lf['disclosed_at']}")
         v["fiscal_period_end"] = cur["fiscal_period_end"]
         v["revenue"] = cur["revenue"]
         v["operating_profit"] = cur["operating_profit"]

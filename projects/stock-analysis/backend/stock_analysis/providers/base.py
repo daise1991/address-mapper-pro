@@ -37,6 +37,18 @@ class Provider(ABC):
         """[{disclosed_at, title, category, url}]。提供しないプロバイダは空を返す。"""
         return []
 
+    def daily_quotes_by_date(self, d: date) -> dict[str, dict[str, Any]] | None:
+        """指定日の全銘柄の日足 {code: row}。一括取得に対応しないプロバイダは None。"""
+        return None
+
+    def financial_statements_by_date(self, d: date) -> dict[str, list[dict[str, Any]]] | None:
+        """指定日に開示された決算サマリー {code: rows}。一括取得に対応しないプロバイダは None。"""
+        return None
+
+    def topix_daily(self, start: date, end: date) -> list[dict[str, Any]]:
+        """TOPIX 日足 [{date, open, high, low, close}]。"""
+        raise DataUnavailable(f"{self.name}: TOPIX 未対応")
+
 
 def classify_disclosure(title: str) -> str:
     t = title

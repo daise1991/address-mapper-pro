@@ -24,6 +24,7 @@ PATHS = {
     "calendar": "/markets/calendar",
     "summary": "/fins/summary",
     "earnings_calendar": "/equities/earnings-calendar",
+    "topix": "/indices/bars/daily/topix",  # Light 以上
 }
 
 
@@ -48,6 +49,13 @@ def _iso(d: Any) -> str | None:
         return None
     s = str(d)
     return f"{s[:4]}-{s[4:6]}-{s[6:8]}" if len(s) == 8 and s.isdigit() else s[:10]
+
+
+def _next_year(d: str | None) -> str | None:
+    if not d:
+        return None
+    y, m, day = d.split("-")
+    return f"{int(y) + 1}-{m}-{'28' if m == '02' and day == '29' else day}"
 
 
 class JQuantsProvider(Provider):
@@ -113,22 +121,41 @@ class JQuantsProvider(Provider):
 
     def daily_quotes(self, code: str, start: date, end: date) -> list[dict[str, Any]]:
         rows = self._get(PATHS["daily"], {"code": to_jquants_code(code), "from": start.isoformat(), "to": end.isoformat()})
-        return [
-            {
-                "date": _iso(_pick(r, "Date")),
-                "open": _num(_pick(r, "O", "Open")),
-                "high": _num(_pick(r, "H", "High")),
-                "low": _num(_pick(r, "L", "Low")),
-                "close": _num(_pick(r, "C", "Close")),
-                "volume": _num(_pick(r, "Vo", "Volume")),
-                "adjustment_factor": _num(_pick(r, "AdjFactor", "AdjustmentFactor")) or 1.0,
-                "adj_close": _num(_pick(r, "AdjC", "AdjustmentClose")),
-            }
-            for r in rows
-        ]
+        return [self._bar(r) for r in rows]
+
+    @staticmethod
+    def _bar(r: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "date": _iso(_pick(r, "Date")),
+            "open": _num(_pick(r, "O", "Open")),
+            "high": _num(_pick(r, "H", "High")),
+            "low": _num(_pick(r, "L", "Low")),
+            "close": _num(_pick(r, "C", "Close")),
+            "volume": _num(_pick(r, "Vo", "Volume")),
+            "adjustment_factor": _num(_pick(r, "AdjFactor", "AdjustmentFactor")) or 1.0,
+            "adj_close": _num(_pick(r, "AdjC", "AdjustmentClose")),
+        }
+
+    def daily_quotes_by_date(self, d: date) -> dict[str, dict[str, Any]] | None:
+        # 日付指定なら全上場銘柄を数リクエストで取得できる（銘柄ごとより API 回数が少ない）
+        rows = self._get(PATHS["daily"], {"date": d.isoformat()})
+        return {from_jquants_code(str(_pick(r, "Code"))): self._bar(r) for r in rows}
+
+    def topix_daily(self, start: date, end: date) -> list[dict[str, Any]]:
+        rows = self._get(PATHS["topix"], {"from": start.isoformat(), "to": end.isoformat()})
+        return [{k: v for k, v in self._bar(r).items() if k in ("date", "open", "high", "low", "close")} for r in rows]
 
     def financial_statements(self, code: str) -> list[dict[str, Any]]:
-        rows = self._get(PATHS["summary"], {"code": to_jquants_code(code)})
+        return self._parse_summary(self._get(PATHS["summary"], {"code": to_jquants_code(code)}))
+
+    def financial_statements_by_date(self, d: date) -> dict[str, list[dict[str, Any]]] | None:
+        out: dict[str, list[dict[str, Any]]] = {}
+        for r in self._get(PATHS["summary"], {"date": d.isoformat()}):
+            code = from_jquants_code(str(_pick(r, "Code")))
+            out.setdefault(code, []).extend(self._parse_summary([r]))
+        return out
+
+    def _parse_summary(self, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         out = []
         for r in rows:
             period = _pick(r, "CurPerType", "TypeOfCurrentPeriod")
@@ -140,10 +167,18 @@ class JQuantsProvider(Provider):
             if not disc_date or not (fy_end or per_end):
                 continue
             disc_time = str(_pick(r, "DiscTime", "DisclosedTime") or "15:00:00")[:8]
-            nxt = period == "FY"  # 本決算では「次期予想」を予想値として使う
+            doc_type = str(_pick(r, "DocType", "TypeOfDocument") or "")
+            is_revision = "ForecastRevision" in doc_type  # 業績予想・配当予想の修正
+            nxt = period == "FY" and not is_revision  # 本決算短信では「次期予想」を予想値として使う
+            if nxt:
+                forecast_fy_end = _iso(_pick(r, "NxtFYEn", "NextFiscalYearEndDate")) or _next_year(fy_end)
+            else:
+                forecast_fy_end = fy_end
             out.append({
                 "fiscal_period_end": (fy_end if period == "FY" else per_end) or fy_end,
-                "period_type": period,
+                # 予想修正は実績を持たないため FY と区別する（実績の比較に混ぜない）
+                "period_type": "REV" if is_revision else period,
+                "forecast_fy_end": forecast_fy_end,
                 "disclosed_at": f"{disc_date}T{disc_time}+09:00",
                 "revenue": _num(_pick(r, "Sales", "NetSales")),
                 "operating_profit": _num(_pick(r, "OP", "OperatingProfit")),
@@ -163,7 +198,7 @@ class JQuantsProvider(Provider):
                 "forecast_net_income": _num(_pick(r, *(("NxFNP", "NextYearForecastProfit") if nxt else ("FNP", "ForecastProfit")))),
                 "forecast_eps": _num(_pick(r, *(("NxFEPS", "NextYearForecastEarningsPerShare") if nxt else ("FEPS", "ForecastEarningsPerShare")))),
                 "forecast_dividend": _num(_pick(r, *(("NxFDivAnn", "NextYearForecastDividendPerShareAnnual") if nxt else ("FDivAnn", "ForecastDividendPerShareAnnual")))),
-                "document_type": _pick(r, "DocType", "TypeOfDocument"),
+                "document_type": doc_type or None,
                 "source_ref": _pick(r, "DiscNo", "DisclosureNumber"),
             })
         return out

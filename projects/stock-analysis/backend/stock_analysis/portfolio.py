@@ -1,8 +1,9 @@
 """保有株・買付余力・資金配分と、翌営業日の SBI証券 S株 購入判断支援。
 
 - 取得単価は損益・税金の試算にだけ使い、評価点や判定には使わない
-- S株は1株単位。夕方（13:30〜24:00）の注文は翌営業日の前場始値で約定するため、
-  当日終値からの乖離に備えて価格バッファを見込む
+- S株は1株単位・成行のみ（指値不可）。夕方（13:30〜24:00）の注文は翌営業日の前場始値で約定するため、
+  当日終値×(1+価格バッファ)を「購入許容上限価格」として表示する。約定価格の保証ではない
+- 毎月の追加投資額（既定 30,000円）を注文案の合計上限にする
 - 自動発注はしない。出力は「注文案」で、利用者が証券会社で承認・発注する
 """
 from __future__ import annotations
@@ -20,7 +21,8 @@ DEFAULT_POLICY = {
     "max_weight_per_stock": 0.10,     # 1銘柄の上限（総資産比）
     "max_weight_emerging": 0.05,      # 新興赤字企業の上限
     "cash_reserve_ratio": 0.10,       # 常に残す現金比率
-    "price_buffer": 0.03,             # 翌朝始値の上振れ見込み
+    "price_buffer": 0.03,             # 購入許容上限価格 = 終値 × (1 + これ)
+    "monthly_budget": 30000,          # 毎月の追加投資額（円）。注文案の合計上限
     "aggressive_budget_ratio": 1.0,   # 積極購入候補は上限まで
     "normal_budget_ratio": 0.5,       # 通常購入候補は上限の半分
 }
@@ -70,7 +72,11 @@ def order_plan(conn: sqlite3.Connection, today: date) -> dict[str, Any]:
     pos = positions(conn)
     run_date, scores = latest_scores(conn)
     total, cash = pos["total_assets"], pos["cash"]
-    spendable = max(0.0, cash - total * policy["cash_reserve_ratio"])
+    spendable_cash = max(0.0, cash - total * policy["cash_reserve_ratio"])
+    month = today.strftime("%Y-%m")
+    month_spent = sum(h["quantity"] * h["avg_cost"] for h in pos["holdings"] if (h.get("acquired_at") or "").startswith(month))
+    month_left = max(0.0, policy["monthly_budget"] - month_spent)
+    spendable = min(spendable_cash, month_left)
     held_mv = {h["code"]: (h["market_value"] or 0.0) for h in pos["holdings"]}
 
     cands = [s for s in scores.values() if s["buy_decision"] in ("aggressive", "normal") and s["price"]]
@@ -81,18 +87,20 @@ def order_plan(conn: sqlite3.Connection, today: date) -> dict[str, Any]:
         ratio = policy["aggressive_budget_ratio"] if s["buy_decision"] == "aggressive" else policy["normal_budget_ratio"]
         room = max(0.0, total * cap_w * ratio - held_mv.get(s["code"], 0.0))
         budget = min(room, spendable)
-        est_price = s["price"] * (1 + policy["price_buffer"])
-        qty = math.floor(budget / est_price) if est_price else 0
+        upper = s["price"] * (1 + policy["price_buffer"])
+        qty = math.floor(budget / upper) if upper else 0
         if qty < 1:
-            skipped.append({"code": s["code"], "name": s["name"], "reason": "上限到達または買付余力不足"})
+            reason = "今月の投資予算の残りが不足" if budget == spendable and spendable < upper else "1銘柄の上限到達または買付余力不足"
+            skipped.append({"code": s["code"], "name": s["name"], "reason": reason})
             continue
-        amount = qty * est_price
+        amount = qty * upper
         spendable -= amount
         orders.append({
             "code": s["code"], "name": s["name"], "decision": s["buy_decision"],
             "growth_score": s["growth_score"], "buy_score": s["buy_score"], "sell_score": s["sell_score"],
             "last_close": s["price"], "target_price": s["target_price"], "theoretical_value": s["theoretical_value"],
             "quantity": qty, "estimated_amount": round(amount),
+            "upper_limit_price": round(upper, 1),
             "note": ("狙い目価格を上回っています。翌朝の始値次第で見送りも検討" if s["target_price"] and s["price"] > s["target_price"]
                      else "狙い目価格以下"),
         })
@@ -105,10 +113,16 @@ def order_plan(conn: sqlite3.Connection, today: date) -> dict[str, Any]:
     return {
         "score_date": run_date,
         "execution": f"{nbd.isoformat()} 前場始値（S株: 13:30〜翌7:00の注文）",
-        "spendable_cash": round(max(0.0, cash - total * policy["cash_reserve_ratio"])),
+        "spendable_cash": round(spendable_cash),
+        "monthly_budget": policy["monthly_budget"],
+        "month_spent": round(month_spent),
+        "month_left": round(month_left),
+        "plan_budget": round(min(spendable_cash, month_left)),
         "policy": policy,
         "buy_orders": orders,
         "skipped": skipped,
         "sell_reviews": sells,
         "disclaimer": "自動発注は行いません。内容を確認し、ご自身で証券会社にて発注してください。",
+        "s_kabu_note": ("S株は成行注文のみで指値注文ができません。購入許容上限価格は判断の目安であり、"
+                        "その価格以下での約定は保証されません。注文後に取り消せる時間帯は SBI証券の案内で確認してください。"),
     }

@@ -67,18 +67,20 @@ def factor_scores(f: Features) -> dict[str, float | None]:
     }
 
 
-def growth_score(f: Features) -> dict[str, Any]:
+def growth_score(f: Features, weights: dict[str, float] | None = None) -> dict[str, Any]:
+    """weights で観点ごとの重みを上書きできる（settings の growth_weights。0 でその観点を使わない）。"""
+    W = {**WEIGHTS, **(weights or {})}
     factors = factor_scores(f)
-    total_w = sum(WEIGHTS.values())
-    avail = {k: v for k, v in factors.items() if v is not None}
-    coverage = sum(WEIGHTS[k] for k in avail) / total_w
+    total_w = sum(W.values()) or 1
+    avail = {k: v for k, v in factors.items() if v is not None and W[k] > 0}
+    coverage = sum(W[k] for k in avail) / total_w
     if coverage < MIN_COVERAGE:
         score = None
     else:
-        score = round_half_up(sum(WEIGHTS[k] * v for k, v in avail.items()) / sum(WEIGHTS[k] for k in avail))
+        score = round_half_up(sum(W[k] * v for k, v in avail.items()) / sum(W[k] for k in avail))
     return {
         "score": score,
         "coverage": round(coverage, 2),
-        "factors": {k: {"label": LABELS[k], "score": None if v is None else round(v, 1), "weight": WEIGHTS[k]}
+        "factors": {k: {"label": LABELS[k], "score": None if v is None else round(v, 1), "weight": W[k]}
                     for k, v in factors.items()},
     }

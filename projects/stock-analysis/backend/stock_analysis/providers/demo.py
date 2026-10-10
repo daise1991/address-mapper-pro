@@ -68,6 +68,18 @@ class DemoProvider(Provider):
             })
         return rows
 
+    def daily_quotes_by_date(self, d: date) -> dict[str, dict[str, Any]] | None:
+        from ..universe import SEED
+        out = {}
+        for code, *_ in SEED:
+            rows = self.daily_quotes(code, d, d)
+            if rows:
+                out[code] = rows[0]
+        return out
+
+    def topix_daily(self, start: date, end: date) -> list[dict[str, Any]]:
+        return [{k: r[k] for k in ("date", "open", "high", "low", "close")} for r in self.daily_quotes("TOPIX", start, end)]
+
     def financial_statements(self, code: str) -> list[dict[str, Any]]:
         r = _rng(code, "fin")
         rev = r.uniform(2e10, 3e12)
@@ -87,7 +99,7 @@ class DemoProvider(Provider):
                 shares *= 1.06  # 希薄化イベント
             f_growth = growth + r.uniform(-0.15, 0.1)
             out.append({
-                "fiscal_period_end": f"{year}-03-31", "period_type": "FY",
+                "fiscal_period_end": f"{year}-03-31", "period_type": "FY", "forecast_fy_end": f"{year + 1}-03-31",
                 "disclosed_at": f"{year}-05-12T15:00:00+09:00",
                 "revenue": rev, "operating_profit": op, "net_income": ni,
                 "eps": ni / shares, "bps": equity / shares, "equity": equity, "total_assets": assets,

@@ -49,10 +49,19 @@ CREATE TABLE IF NOT EXISTS daily_quotes (
     PRIMARY KEY (code, date)
 );
 
+CREATE TABLE IF NOT EXISTS benchmark_quotes (
+    name TEXT NOT NULL,                  -- TOPIX など
+    date TEXT NOT NULL,
+    open REAL, high REAL, low REAL, close REAL,
+    source TEXT NOT NULL,
+    fetched_at TEXT NOT NULL,
+    PRIMARY KEY (name, date)
+);
+
 CREATE TABLE IF NOT EXISTS financials (
     code TEXT NOT NULL,
     fiscal_period_end TEXT NOT NULL,     -- 対象決算期末 (YYYY-MM-DD)
-    period_type TEXT NOT NULL,           -- FY / 1Q / 2Q / 3Q
+    period_type TEXT NOT NULL,           -- FY / 1Q / 2Q / 3Q / REV（予想修正のみ）
     disclosed_at TEXT NOT NULL,          -- 公表日時
     revenue REAL, operating_profit REAL, net_income REAL,
     eps REAL, bps REAL, equity REAL, total_assets REAL,
@@ -61,6 +70,7 @@ CREATE TABLE IF NOT EXISTS financials (
     dividend_per_share REAL,
     forecast_revenue REAL, forecast_operating_profit REAL, forecast_net_income REAL,
     forecast_eps REAL, forecast_dividend REAL,
+    forecast_fy_end TEXT,                -- 予想値が対象とする決算期末
     document_type TEXT,
     source TEXT NOT NULL,
     source_ref TEXT,
@@ -166,6 +176,7 @@ CREATE TABLE IF NOT EXISTS scores (
     sell_decision TEXT,
     exit_type TEXT,                    -- profit_taking / stop_loss / NULL
     indicators TEXT,
+    method_version TEXT,               -- 計算方式のバージョン（変更前後の比較用）
     created_at TEXT NOT NULL,
     PRIMARY KEY (run_date, code)
 );
@@ -222,6 +233,16 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
     created_at TEXT NOT NULL
 );
 
+-- 重複通知防止。同じ key の通知は一度だけ送る
+CREATE TABLE IF NOT EXISTS alert_log (
+    key TEXT PRIMARY KEY,
+    run_date TEXT NOT NULL,
+    code TEXT,
+    kind TEXT NOT NULL,
+    message TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS notifications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at TEXT NOT NULL,
@@ -247,7 +268,22 @@ def connect(path: Path | str | None = None) -> sqlite3.Connection:
     conn.execute("PRAGMA foreign_keys = ON")
     conn.execute("PRAGMA journal_mode = WAL") if str(db_path) != ":memory:" else None
     conn.executescript(SCHEMA)
+    _migrate(conn)
     return conn
+
+
+# 既存DBに後から追加した列（CREATE TABLE IF NOT EXISTS では追加されないため）
+MIGRATIONS = [("scores", "method_version", "TEXT"), ("financials", "forecast_fy_end", "TEXT")]
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    for table, col, typ in MIGRATIONS:
+        cols = {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}
+        if col not in cols:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")
+    # 計算方式変更前の採点結果の保管先（scores と同じ列＋保管日時）
+    conn.execute("CREATE TABLE IF NOT EXISTS scores_archive AS SELECT *, '' AS archived_at FROM scores WHERE 0")
+    conn.commit()
 
 
 @contextmanager

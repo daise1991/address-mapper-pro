@@ -17,9 +17,31 @@ from .scoring.valuation import evaluate, years_until
 from .universe import active_codes
 
 
+# 計算方式のバージョン。採点ロジックを変えたら必ず上げる（変更前の結果は scores_archive に残る）。
+# 配点・判定閾値の変更は rules:<ID> 部分が変わることで区別される
+METHOD_VERSION = "2026.10-v1"
+
+
+def version_label(weights: dict[str, dict[str, float]]) -> str:
+    custom = bool(weights.get("growth") or weights.get("sell"))
+    return f"{METHOD_VERSION}（{'利用者設定の配点' if custom else '成長期待・売りは暫定配点'}）"
+
+
 def load_rules(conn: sqlite3.Connection) -> RuleSet:
     overrides = get_setting(conn, "rules", {}) or {}
     return RuleSet(**overrides)
+
+
+def load_weights(conn: sqlite3.Connection) -> dict[str, dict[str, float]]:
+    """成長期待点・売り点数の重みの上書き（settings）。未設定なら暫定配点のまま。"""
+    return {"growth": get_setting(conn, "growth_weights", {}) or {}, "sell": get_setting(conn, "sell_weights", {}) or {}}
+
+
+def rules_fingerprint(rules: RuleSet, weights: dict[str, Any] | None = None) -> str:
+    """判定閾値と配点の組み合わせを短いIDにする（どちらかを変えるとバージョンが変わる）。"""
+    import hashlib
+    payload = {"rules": rules.to_dict(), "weights": weights or {}}
+    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:8]
 
 
 def closes_until(conn: sqlite3.Connection, code: str, d: date, n: int = 260) -> list[tuple[str, float]]:
@@ -43,7 +65,9 @@ def _growth_drop(conn: sqlite3.Connection, code: str, d: date, current: int | No
     return max(0.0, r["growth_score"] - current) if r else None
 
 
-def score_one(conn: sqlite3.Connection, code: str, d: date, rules: RuleSet) -> dict[str, Any]:
+def score_one(conn: sqlite3.Connection, code: str, d: date, rules: RuleSet,
+              weights: dict[str, dict[str, float]] | None = None) -> dict[str, Any]:
+    weights = weights if weights is not None else load_weights(conn)
     series = closes_until(conn, code, d)
     # 当日の確定終値が無い銘柄は株価依存の点数を出さない（古い株価で代用しない）
     price = series[-1][1] if series and series[-1][0] == d.isoformat() else None
@@ -58,8 +82,9 @@ def score_one(conn: sqlite3.Connection, code: str, d: date, rules: RuleSet) -> d
     years = years_until(a.target_year, d, a.fiscal_month_end) if a else None
     feats = build_features(conn, code, d, price, ind, target_eps, years)
 
-    g = growth_score(feats)
-    s = sell_score(feats, val.v_over_p, _growth_drop(conn, code, d, g["score"])) if price else {"score": None, "factors": {}}
+    g = growth_score(feats, weights["growth"])
+    s = (sell_score(feats, val.v_over_p, _growth_drop(conn, code, d, g["score"]), weights["sell"])
+         if price else {"score": None, "factors": {}})
     buy = val.buy_score
     bd = buy_decision(g["score"], buy, s["score"], rules)
     sd = sell_decision(s["score"], rules)
@@ -74,14 +99,21 @@ def score_one(conn: sqlite3.Connection, code: str, d: date, rules: RuleSet) -> d
         "sell_score": s["score"], "sell_detail": json.dumps(s, ensure_ascii=False),
         "buy_decision": bd, "sell_decision": sd, "exit_type": et,
         "indicators": json.dumps({**ind, "sources": feats.sources}, ensure_ascii=False),
+        "method_version": f"{version_label(weights)} / rules:{rules_fingerprint(rules, weights)}",
         "created_at": now_iso(),
     }
+    old = conn.execute("SELECT method_version FROM scores WHERE run_date=? AND code=?", (row["run_date"], code)).fetchone()
+    if old and old["method_version"] != row["method_version"]:
+        # 方式変更で同じ日を再計算する場合、変更前の結果を保存してから上書きする
+        conn.execute("INSERT INTO scores_archive SELECT *, ? FROM scores WHERE run_date=? AND code=?",
+                     (now_iso(), row["run_date"], code))
     upsert(conn, "scores", row, ["run_date", "code"])
     return row
 
 
 def run_scoring(conn: sqlite3.Connection, d: date, codes: list[str] | None = None) -> list[dict[str, Any]]:
     rules = load_rules(conn)
-    out = [score_one(conn, c, d, rules) for c in (codes or active_codes(conn))]
+    weights = load_weights(conn)
+    out = [score_one(conn, c, d, rules, weights) for c in (codes or active_codes(conn))]
     conn.commit()
     return out

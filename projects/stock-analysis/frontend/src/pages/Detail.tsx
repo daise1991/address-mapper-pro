@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Meta, ScoreRow, send } from "../api";
-import { Bar, Decision, ErrorBox, fmt, pct, PriceChart, Score, useApi } from "../ui";
+import { Bar, Decision, ErrorBox, fmt, pct, PriceChart, Score, ScoreHistory, useApi } from "../ui";
 
 type Assumption = {
   method: string; target_year: number; fiscal_month_end: number; required_return: number; safety_margin: number; reason: string;
@@ -109,10 +109,15 @@ export default function Detail({ code, meta, onBack }: { code: string; meta: Met
         <p className="muted">青: 調整後終値 / 橙: 25日線 / 緑: 75日線。株価出所: {data.quotes.at(-1)?.source ?? "—"}（取得 {data.quotes.at(-1)?.fetched_at ?? "—"}）</p>
       </div>
 
+      <div className="panel">
+        <h2>過去の点数推移</h2>
+        <ScoreHistory scores={data.scores} />
+      </div>
+
       {s && (
         <div className="grid">
           <div className="panel">
-            <h2>A. 成長期待点 <span className="muted">カバー率 {pct(s.growth_detail.coverage, 0)}</span></h2>
+            <h2>A. 成長期待点 {s.method_version?.includes("暫定") && <span className="badge warn">暫定配点</span>} <span className="muted">カバー率 {pct(s.growth_detail.coverage, 0)}</span></h2>
             <Factors title="観点" f={s.growth_detail.factors} />
           </div>
           <div className="panel">
@@ -124,11 +129,19 @@ export default function Detail({ code, meta, onBack }: { code: string; meta: Met
               <tr><td className="l">割引年数</td><td>{fmt(s.buy_detail.years, 2)}</td></tr>
               <tr><td className="l">現在理論価値 V</td><td>{fmt(s.theoretical_value)}</td></tr>
               <tr><td className="l">V / P</td><td>{fmt(s.buy_detail.v_over_p, 3)}</td></tr>
-              <tr><td className="l">狙い目価格</td><td>{fmt(s.target_price)}</td></tr>
+              <tr><td className="l">狙い目買値</td><td>{fmt(s.target_price)}</td></tr>
+              {s.buy_detail.inputs && <>
+                <tr><td className="l">目標年度</td><td>{s.buy_detail.inputs.target_year}年度（決算{s.buy_detail.inputs.fiscal_month_end}月）</td></tr>
+                <tr><td className="l">将来予想EPS</td><td>{fmt(s.buy_detail.inputs.eps_forecast ?? s.buy_detail.inputs.normalized_eps ?? null, 1)}</td></tr>
+                <tr><td className="l">想定PER</td><td>{fmt(s.buy_detail.inputs.assumed_per ?? null, 1)}</td></tr>
+                <tr><td className="l">必要利回り／安全余裕</td><td>{pct(s.buy_detail.inputs.required_return)}／{pct(s.buy_detail.inputs.safety_margin, 0)}</td></tr>
+                <tr><td className="l">評価根拠</td><td className="wrap">{s.buy_detail.inputs.reason}</td></tr>
+              </>}
+              <tr><td className="l">計算方式</td><td className="wrap">{s.method_version ?? "—"}</td></tr>
             </tbody></table>
           </div>
           <div className="panel">
-            <h2>C. 売り点数 <span className="muted">割高系 {fmt(s.sell_detail.valuation_side ?? null, 0)} / 業績・財務系 {fmt(s.sell_detail.fundamental_side ?? null, 0)}</span></h2>
+            <h2>C. 売り点数 {s.method_version?.includes("暫定") && <span className="badge warn">暫定配点</span>} <span className="muted">割高系 {fmt(s.sell_detail.valuation_side ?? null, 0)} / 業績・財務系 {fmt(s.sell_detail.fundamental_side ?? null, 0)}</span></h2>
             <Factors title="観点" f={s.sell_detail.factors} />
           </div>
           <div className="panel">

@@ -12,7 +12,7 @@ const ACCOUNTS: Record<string, string> = { specific: "特定", general: "一般"
 
 export default function Portfolio({ meta, onOpen }: { meta: Meta; onOpen: (c: string) => void }) {
   const { data, error, reload } = useApi<Resp>("/portfolio");
-  const [h, setH] = useState({ code: "", quantity: "", avg_cost: "", account: "specific" });
+  const [h, setH] = useState({ code: "", quantity: "", avg_cost: "", account: "specific", acquired_at: new Date().toISOString().slice(0, 10) });
   const [cash, setCash] = useState("");
   const [msg, setMsg] = useState("");
 
@@ -65,13 +65,14 @@ export default function Portfolio({ meta, onOpen }: { meta: Meta; onOpen: (c: st
           <input placeholder="コード" style={{ width: 80 }} value={h.code} onChange={(e) => setH({ ...h, code: e.target.value.toUpperCase() })} />
           <input type="number" placeholder="株数" style={{ width: 90 }} value={h.quantity} onChange={(e) => setH({ ...h, quantity: e.target.value })} />
           <input type="number" placeholder="取得単価" style={{ width: 110 }} value={h.avg_cost} onChange={(e) => setH({ ...h, avg_cost: e.target.value })} />
+          <input type="date" aria-label="購入日" value={h.acquired_at} onChange={(e) => setH({ ...h, acquired_at: e.target.value })} />
           <select value={h.account} onChange={(e) => setH({ ...h, account: e.target.value })}>
             {Object.entries(ACCOUNTS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
-          <button className="primary" onClick={() => run(() => send("/holdings", "POST", { code: h.code, quantity: Number(h.quantity), avg_cost: Number(h.avg_cost), account: h.account }), "追加しました")}>追加</button>
+          <button className="primary" onClick={() => run(() => send("/holdings", "POST", { code: h.code, quantity: Number(h.quantity), avg_cost: Number(h.avg_cost), account: h.account, acquired_at: h.acquired_at }), "追加しました")}>追加</button>
           <span>{msg}</span>
         </div>
-        <p className="muted">取得単価・含み損益は損益と税金（特定口座 20.315%）の試算にのみ使い、企業の評価点・売買判定には使いません。</p>
+        <p className="muted">購入日は「今月の投資予算（月3万円）」の残りの計算に使います。取得単価・含み損益は損益と税金（特定口座 20.315%）の試算にのみ使い、企業の評価点・売買判定には使いません。</p>
       </div>
     </>
   );

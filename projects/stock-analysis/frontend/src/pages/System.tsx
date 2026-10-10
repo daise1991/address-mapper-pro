@@ -29,6 +29,57 @@ async function subscribePush(): Promise<string> {
   return "この端末でプッシュ通知を受け取れるようになりました。";
 }
 
+type WeightRow = { label: string; default: number; current: number };
+type Weights = { growth: Record<string, WeightRow>; sell: Record<string, WeightRow>; customized: boolean; note: { note: string; updated_at: string } | null };
+
+function WeightsEditor() {
+  const { data, error, reload } = useApi<Weights>("/settings/weights");
+  const [edit, setEdit] = useState<Record<string, Record<string, string>>>({});
+  const [note, setNote] = useState("");
+  const [msg, setMsg] = useState("");
+  if (error) return <ErrorBox error={error} />;
+  if (!data) return null;
+  const val = (g: "growth" | "sell", k: string) => edit[g]?.[k] ?? String(data[g][k].current);
+  const save = async () => {
+    const pick = (g: "growth" | "sell") =>
+      Object.fromEntries(Object.keys(data[g]).map((k) => [k, Number(val(g, k))]).filter(([k, v]) => v !== data[g][k as string].default));
+    try {
+      const r = await send<{ message: string }>("/settings/weights", "PUT", { growth: pick("growth"), sell: pick("sell"), note });
+      setMsg(r.message);
+      reload();
+    } catch (e) {
+      setMsg(`失敗: ${(e as Error).message}`);
+    }
+  };
+  const table = (g: "growth" | "sell", title: string) => (
+    <div>
+      <h2>{title}</h2>
+      <table><tbody>
+        {Object.entries(data[g]).map(([k, r]) => (
+          <tr key={k}>
+            <td className="l">{r.label}</td>
+            <td><input type="number" min={0} style={{ width: 70 }} value={val(g, k)}
+              onChange={(e) => setEdit({ ...edit, [g]: { ...edit[g], [k]: e.target.value } })} /></td>
+            <td className="muted">暫定 {r.default}</td>
+          </tr>
+        ))}
+      </tbody></table>
+    </div>
+  );
+  return (
+    <div className="panel">
+      <h2>配点設定（成長期待点・売り点数） {data.customized ? <span className="badge info">利用者設定</span> : <span className="badge warn">暫定配点</span>}</h2>
+      <p className="muted">従来の配点がある場合はここで重みを入力してください（合計は100でなくても比率で計算）。0にするとその観点は使いません。
+        変更すると計算方式のバージョンが変わり、変更前の採点結果も保存されます。{data.note && `最終変更: ${data.note.updated_at.slice(0, 16)}「${data.note.note}」`}</p>
+      <div className="grid">{table("growth", "A. 成長期待点")}{table("sell", "C. 売り点数")}</div>
+      <div className="row">
+        <input style={{ flex: 1, minWidth: 200 }} placeholder="変更理由（必須）例: 従来の配点に合わせる" value={note} onChange={(e) => setNote(e.target.value)} />
+        <button className="primary" onClick={save}>配点を保存</button><span>{msg}</span>
+      </div>
+    </div>
+  );
+}
+
 const STATUS_CLS: Record<string, string> = { done: "good", waiting: "warn", delayed: "bad", failed: "bad", skipped: "", running: "info" };
 
 export default function System() {
@@ -46,6 +97,7 @@ export default function System() {
         </div>
         <p className="muted">毎営業日18:00に購入候補・保有株の売却検討を通知します。データ遅延時は遅延通知を送ります。</p>
       </div>
+      <WeightsEditor />
       <div className="grid">
         <div className="panel">
           <h2>通知履歴</h2>
