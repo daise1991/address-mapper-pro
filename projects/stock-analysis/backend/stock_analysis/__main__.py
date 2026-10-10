@@ -151,6 +151,24 @@ def main() -> None:
     se = sub.add_parser("screen-emerging", help="新興株の定期選別（追加候補・外す候補の報告書を作る。銘柄一覧は変えない）")
     se.add_argument("--date")
     se.add_argument("--out", default=None)
+    wa = sub.add_parser("watch-add", help="監視枠に銘柄を入れる（正式な監視銘柄は変えない）。例: watch-add proposal-2026-10 main 4377:ワンキャリア")
+    wa.add_argument("list_name")
+    wa.add_argument("tier", choices=["main", "research", "past"])
+    wa.add_argument("items", nargs="+", help="コード または コード:銘柄名")
+    wa.add_argument("--reason", default=None)
+    wa.add_argument("--date")
+    wr = sub.add_parser("watch-remove", help="監視枠から外す（行は消さず過去監視枠へ移す）")
+    wr.add_argument("list_name")
+    wr.add_argument("tier", choices=["main", "research", "past"])
+    wr.add_argument("code")
+    wr.add_argument("--reason", required=True)
+    wr.add_argument("--date")
+    ws = sub.add_parser("watch-score", help="監視枠を並行採点（scores_watch。正式の採点は変えない）")
+    ws.add_argument("--date", required=True)
+    wp = sub.add_parser("watch-report", help="監視枠どうしを同じ評価日で比較し、成績（1・3・6か月後とTOPIX）を表示")
+    wp.add_argument("lists", nargs="+")
+    wp.add_argument("--date", required=True)
+    wp.add_argument("--out", default=None)
     ex = sub.add_parser("explain", help="銘柄の買い点数の計算根拠を表示（例: explain 5711）")
     ex.add_argument("code")
     sub.add_parser("check", help="J-Quants / EDINET の接続チェック（キー設定後に最初に実行）")
@@ -275,6 +293,25 @@ def main() -> None:
         rep, path = run_and_save(conn, make_provider(), d0, args.out)
         print(f"{rep['universe']}社を選別：条件を満たした {rep['passed']}社、追加候補 {len(rep['add'])}社、外す候補 {len(rep['drop'])}社")
         print(f"報告書: {path}（追加・削除は承認後に行います）")
+    elif args.cmd.startswith("watch-"):
+        from . import watch
+        conn = connect()
+        d0 = date.fromisoformat(args.date) if args.date else datetime.now(JST).date()
+        if args.cmd == "watch-add":
+            items = [dict(zip(("code", "name"), x.split(":", 1)), reason=args.reason) for x in args.items]
+            print(f"{args.list_name} / {watch.TIERS[args.tier]} に {watch.add(conn, args.list_name, args.tier, items, d0)}銘柄を追加")
+        elif args.cmd == "watch-remove":
+            ok = watch.remove(conn, args.list_name, args.tier, args.code, d0, args.reason)
+            print("外して過去監視枠へ移しました" if ok else "該当なし（変更なし）")
+        elif args.cmd == "watch-score":
+            print(f"{d0} 監視枠 {watch.score(conn, d0)}銘柄を並行採点")
+        else:
+            md = watch.to_markdown(watch.compare(conn, args.lists, d0))
+            md += watch.track_markdown(conn, args.lists, d0)
+            if args.out:
+                from pathlib import Path
+                Path(args.out).write_text(md, encoding="utf-8")
+            print(md)
     elif args.cmd == "explain":
         from .checks import explain
         print("\n".join(explain(connect(), args.code.upper())))

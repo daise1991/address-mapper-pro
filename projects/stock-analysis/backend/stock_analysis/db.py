@@ -288,6 +288,8 @@ def _migrate(conn: sqlite3.Connection) -> None:
     from .v5 import engine as v5_engine
     research.ensure_schema(conn)
     v5_engine.ensure_schema(conn)
+    from . import watch
+    watch.ensure_schema(conn)
     conn.commit()
 
 

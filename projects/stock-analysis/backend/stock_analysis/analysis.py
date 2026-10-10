@@ -54,11 +54,12 @@ def closes_until(conn: sqlite3.Connection, code: str, d: date, n: int = 260) -> 
     return [(r["date"], r["c"]) for r in reversed(rows)]
 
 
-def _growth_drop(conn: sqlite3.Connection, code: str, d: date, current: int | None) -> float | None:
+def _growth_drop(conn: sqlite3.Connection, code: str, d: date, current: int | None,
+                 table: str = "scores") -> float | None:
     if current is None:
         return None
     r = conn.execute(
-        """SELECT growth_score FROM scores WHERE code=? AND run_date<=? AND growth_score IS NOT NULL
+        f"""SELECT growth_score FROM {table} WHERE code=? AND run_date<=? AND growth_score IS NOT NULL
            ORDER BY run_date DESC LIMIT 1""",
         (code, (d - timedelta(days=90)).isoformat()),
     ).fetchone()
@@ -66,7 +67,8 @@ def _growth_drop(conn: sqlite3.Connection, code: str, d: date, current: int | No
 
 
 def score_one(conn: sqlite3.Connection, code: str, d: date, rules: RuleSet,
-              weights: dict[str, dict[str, float]] | None = None) -> dict[str, Any]:
+              weights: dict[str, dict[str, float]] | None = None, table: str = "scores") -> dict[str, Any]:
+    """table="scores_watch" は監視枠（正式な監視銘柄以外）の並行採点。計算方式は同じで、保存先だけ分ける。"""
     weights = weights if weights is not None else load_weights(conn)
     series = closes_until(conn, code, d)
     # 当日の確定終値が無い銘柄は株価依存の点数を出さない（古い株価で代用しない）
@@ -95,7 +97,7 @@ def score_one(conn: sqlite3.Connection, code: str, d: date, rules: RuleSet,
     feats = build_features(conn, code, d, price, ind, target_eps, years)
 
     g = growth_score(feats, weights["growth"])
-    s = (sell_score(feats, val.v_over_p, _growth_drop(conn, code, d, g["score"]), weights["sell"])
+    s = (sell_score(feats, val.v_over_p, _growth_drop(conn, code, d, g["score"], table), weights["sell"])
          if price else {"score": None, "factors": {}})
     buy = val.buy_score
     bd = buy_decision(g["score"], buy, s["score"], rules)
@@ -118,6 +120,9 @@ def score_one(conn: sqlite3.Connection, code: str, d: date, rules: RuleSet,
         "method_version": f"{version_label(weights)} / rules:{rules_fingerprint(rules, weights)}",
         "created_at": now_iso(),
     }
+    if table != "scores":
+        upsert(conn, table, row, ["run_date", "code"])
+        return row
     old = conn.execute("SELECT method_version FROM scores WHERE run_date=? AND code=?", (row["run_date"], code)).fetchone()
     if old and old["method_version"] != row["method_version"]:
         # 方式変更で同じ日を再計算する場合、変更前の結果を保存してから上書きする

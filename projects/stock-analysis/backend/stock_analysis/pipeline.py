@@ -150,7 +150,14 @@ def do_fetch(conn: sqlite3.Connection, provider: Provider, d: date, now: datetim
         ingest_disclosures(conn, provider, code, d - timedelta(days=7), d, tag)
         detect_gaps(conn, code, d - timedelta(days=30), d)
     _edinet_disclosures(conn, d, codes, tag)
-    return "done", f"{len(codes)}銘柄の終値・決算・開示を取得"
+    extra = ""
+    try:  # 監視枠（正式な監視銘柄以外）。失敗しても正式の処理は止めない
+        from . import watch
+        extra = " / " + watch.fetch(conn, provider, d, tag)
+    except Exception as e:  # noqa: BLE001
+        conn.execute("INSERT INTO fetch_log (run_id, source, target, status, message, fetched_at) VALUES (?,?,?,?,?,?)",
+                     (tag, "watch", "fetch", "error", str(e)[:500], now_iso()))
+    return "done", f"{len(codes)}銘柄の終値・決算・開示を取得{extra}"
 
 
 def do_finalize(conn: sqlite3.Connection, d: date) -> str:
@@ -223,6 +230,12 @@ def run_daily(conn: sqlite3.Connection, provider: Provider, d: date | None = Non
                 from .analysis import METHOD_VERSION
                 flagged = research.monitor(conn, d, METHOD_VERSION)
                 n = len(run_scoring(conn, d))
+                try:  # 監視枠の並行採点（scores_watch。正式の採点・候補・通知には使わない）
+                    from . import watch
+                    watch.score(conn, d)
+                except Exception as e:  # noqa: BLE001
+                    conn.execute("INSERT INTO fetch_log (run_id, source, target, status, message, fetched_at) VALUES (?,?,?,?,?,?)",
+                                 (f"{d}:score", "watch", "scoring", "error", str(e)[:500], now_iso()))
                 try:  # v5 は比較検証用。既定では実行しない（STOCK_V5_SHADOW=1 のときだけ。通知・候補には使わない）
                     if get_settings().v5_shadow:
                         from .v5 import engine as v5engine
