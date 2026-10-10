@@ -187,3 +187,19 @@ def test_max_drawdown_recorded(conn):
     assert r is not None and r["max_drawdown"] <= 0 and r["max_drawdown"] <= min(0, r["forward_return"]) + 1e-9
     s = summary(conn, 20, benchmark="TOPIX")
     assert "mean_max_drawdown" in next(iter(s["buy_buckets"].values())) and "保証" in s["disclaimer"]
+
+
+def test_stock_split_not_treated_as_dilution(conn):
+    from stock_analysis.scoring.features import build_features
+    for y, shares in ((2025, 1.68e8), (2026, 8.4e8)):  # 1:5 分割後基準で書き直された株数
+        upsert(conn, "financials", {"code": "6857", "fiscal_period_end": f"{y}-03-31", "period_type": "FY",
+                                    "disclosed_at": f"{y}-05-10T15:00:00+09:00", "shares_outstanding": shares,
+                                    "eps": 500.0, "source": "test", "fetched_at": "x"},
+               ["code", "fiscal_period_end", "period_type", "disclosed_at"])
+    f = build_features(conn, "6857", D, 1000.0, {})
+    assert f.get("share_change") is None and any("分割の可能性" in x for x in f.sources)
+    # 調整係数（0.2 = 1:5 分割）が株価データにあれば、それで割って判定する
+    upsert(conn, "daily_quotes", {"code": "6857", "date": "2026-03-30", "close": 100.0, "adjustment_factor": 0.2,
+                                  "is_final": 1, "source": "test", "fetched_at": "x"}, ["code", "date"])
+    f = build_features(conn, "6857", D, 1000.0, {})
+    assert f.get("share_change") == pytest.approx(0.0, abs=0.01)

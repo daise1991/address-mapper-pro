@@ -152,4 +152,15 @@ def explain(conn: Any, code: str, d: date | None = None) -> list[str]:
     v = evaluate(a, q["close"] if q else None, d)
     out.append(f"計算: 将来株価={v.future_price} 年数={v.years} 理論価値V={v.theoretical_value} V/P={v.v_over_p} "
                f"買い点数={v.buy_score}（k150={v.buy_score_k150}） 理由: {v.reason}")
+    sc = conn.execute("SELECT sell_score, sell_detail, indicators FROM scores WHERE code=? AND run_date=?",
+                      (code, d.isoformat())).fetchone()
+    if sc and sc["sell_detail"]:
+        import json
+        det = json.loads(sc["sell_detail"])
+        parts = [f"{x['label']}={x['score']}" for x in det.get("factors", {}).values()]
+        out.append(f"売り点数 {sc['sell_score']}: " + "、".join(parts))
+        out.append(f"採点に使った情報: {json.loads(sc['indicators'] or '{}').get('sources')}")
+    disc = conn.execute("SELECT disclosed_at, category, title FROM disclosures WHERE code=? ORDER BY disclosed_at DESC LIMIT 5",
+                        (code,)).fetchall()
+    out.append("直近の開示: " + (" ／ ".join(f"{r['disclosed_at'][:10]} {r['category']} {r['title']}" for r in disc) or "なし"))
     return out

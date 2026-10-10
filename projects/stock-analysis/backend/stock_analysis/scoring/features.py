@@ -61,6 +61,17 @@ def latest_forecast(conn: sqlite3.Connection, code: str, after_fy_end: str, cuto
     return dict(r) if r else None
 
 
+def split_ratio(conn: sqlite3.Connection, code: str, after: str, until: str) -> float:
+    """after〜until の間の株式分割・併合の倍率（J-Quants の調整係数の逆数の積。1:5 分割なら 5）。"""
+    r = 1.0
+    for row in conn.execute("""SELECT adjustment_factor FROM daily_quotes WHERE code=? AND date>? AND date<=?
+                               AND adjustment_factor IS NOT NULL AND adjustment_factor!=1.0""",
+                            (code, after[:10], until[:10])):
+        if row["adjustment_factor"] > 0:
+            r /= row["adjustment_factor"]
+    return r
+
+
 def build_features(
     conn: sqlite3.Connection,
     code: str,
@@ -123,12 +134,21 @@ def build_features(
             if prev["interest_bearing_debt"] is not None and cur["interest_bearing_debt"] is not None and cur["total_assets"]:
                 v["debt_change_to_assets"] = (cur["interest_bearing_debt"] - prev["interest_bearing_debt"]) / cur["total_assets"]
             if prev["shares_outstanding"] and cur["shares_outstanding"]:
-                v["share_change"] = cur["shares_outstanding"] / prev["shares_outstanding"] - 1
+                # 決算短信は株式分割後の基準で株数を書き直すことが多いため、分割倍率で割ってから希薄化を判定する
+                ratio = cur["shares_outstanding"] / prev["shares_outstanding"]
+                ratio /= split_ratio(conn, code, prev["disclosed_at"], cur["disclosed_at"])
+                if ratio >= 1.9 and abs(ratio - round(ratio)) < 0.05:
+                    # 整数倍の急増は株式分割の取り込み漏れとみなし、増資（希薄化）とは判定しない
+                    f.sources.append(f"株数が{ratio:.1f}倍（分割の可能性。希薄化判定から除外）")
+                else:
+                    v["share_change"] = ratio - 1
+        # 決算公表後に分割があれば、1株あたり指標を分割後の基準に直す
+        adj = 1 / split_ratio(conn, code, cur["disclosed_at"], as_of.isoformat())
         if price and cur["eps"] and cur["eps"] > 0:
-            v["per"] = price / cur["eps"]
+            v["per"] = price / (cur["eps"] * adj)
         if price and cur["bps"] and cur["bps"] > 0:
-            v["pbr"] = price / cur["bps"]
-        base_eps = cur["forecast_eps"] or cur["eps"]
+            v["pbr"] = price / (cur["bps"] * adj)
+        base_eps = (cur["forecast_eps"] or cur["eps"] or 0) * adj or None
         if eps_target and base_eps and base_eps > 0 and eps_target > 0 and target_years and target_years > 0.5:
             v["eps_cagr_to_target"] = (eps_target / base_eps) ** (1 / target_years) - 1
 
