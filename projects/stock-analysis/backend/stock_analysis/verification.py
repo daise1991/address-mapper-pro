@@ -46,11 +46,25 @@ def compute_forward_returns(conn: sqlite3.Connection, horizons: tuple[int, ...] 
             upsert(conn, "verifications", {
                 "score_date": s["run_date"], "code": s["code"], "horizon": h,
                 "entry_price": entry["c"], "exit_price": ex[1], "exit_date": ex[0],
-                "forward_return": ex[1] / entry["c"] - 1, "created_at": now_iso(),
+                "forward_return": ex[1] / entry["c"] - 1,
+                "max_drawdown": _max_drawdown(conn, s["code"], s["run_date"], ex[0], entry["c"]),
+                "created_at": now_iso(),
             }, ["score_date", "code", "horizon"])
             n += 1
+    # 列追加前に作られた検証行の最大下落幅を補完する
+    for v in conn.execute("SELECT score_date, code, horizon, exit_date, entry_price FROM verifications WHERE max_drawdown IS NULL").fetchall():
+        conn.execute("UPDATE verifications SET max_drawdown=? WHERE score_date=? AND code=? AND horizon=?",
+                     (_max_drawdown(conn, v["code"], v["score_date"], v["exit_date"], v["entry_price"]),
+                      v["score_date"], v["code"], v["horizon"]))
     conn.commit()
     return n
+
+
+def _max_drawdown(conn: sqlite3.Connection, code: str, start: str, end: str, entry: float) -> float | None:
+    """評価日の終値から、期間中の最安値（調整後終値）までの下落率。上昇し続けた場合は 0。"""
+    r = conn.execute("""SELECT MIN(COALESCE(adj_close, close)) FROM daily_quotes
+                        WHERE code=? AND date>? AND date<=?""", (code, start, end)).fetchone()
+    return min(0.0, r[0] / entry - 1) if r and r[0] and entry else None
 
 
 def _rank(xs: list[float]) -> list[float]:
@@ -87,7 +101,7 @@ def _bench_close(conn: sqlite3.Connection, name: str, d: str) -> float | None:
 
 def _load(conn: sqlite3.Connection, horizon: int, live_only: bool, benchmark: str = "universe",
           method_version: str | None = None) -> list[dict[str, Any]]:
-    sql = """SELECT s.*, v.forward_return, v.exit_date, json_extract(s.buy_detail, '$.v_over_p') AS v_over_p
+    sql = """SELECT s.*, v.forward_return, v.exit_date, v.max_drawdown, json_extract(s.buy_detail, '$.v_over_p') AS v_over_p
              FROM scores s JOIN verifications v ON v.score_date=s.run_date AND v.code=s.code AND v.horizon=?
              WHERE 1=1"""
     params: list[Any] = [horizon]
@@ -126,6 +140,8 @@ def _stats(rows: list[dict[str, Any]], sell_side: bool = False) -> dict[str, Any
         "mean_excess": round(mean(ex), 4) if ex else None,
         "hit_rate": round(sum(hit) / len(hit), 3) if hit else None,
         "worst": round(min(rets), 4),
+        "mean_max_drawdown": (round(mean(dd), 4) if (dd := [r["max_drawdown"] for r in rows if r.get("max_drawdown") is not None]) else None),
+        "worst_max_drawdown": round(min(dd), 4) if dd else None,
     }
 
 
@@ -188,6 +204,7 @@ def summary(conn: sqlite3.Connection, horizon: int = 60, live_only: bool = False
         },
         "buy_buckets": {k: _stats(v) for k, v in sorted(buckets.items())},
         "rules": {name: _stats([r for r in rows if f(r)], sell_side) for name, (f, sell_side) in rule_signals(rules).items()},
+        "disclaimer": "検証で有効性が確認されるまで、点数は投資成果を保証する指標ではありません。",
         "note": "後から再計算した分（backfill）は評価前提が現在の値のため先読みバイアスを含む。当日保存分のみ（live_only）が本来の検証値。"
                 "超過リターン・的中率は比較対象に対する値。",
     }

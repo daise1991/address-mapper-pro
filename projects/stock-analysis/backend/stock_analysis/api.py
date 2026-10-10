@@ -20,6 +20,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import assumptions as assumption_store
+from . import research as research_store
 from .analysis import load_rules
 from .config import BASE_DIR, JST, get_settings
 from .db import connect, get_setting, now_iso, rows, set_setting, upsert
@@ -192,6 +193,7 @@ def security_detail(code: str, db: sqlite3.Connection = Depends(get_db)) -> dict
         "assumption_history": [json.loads(r["payload"]) for r in db.execute(
             "SELECT payload FROM valuation_assumption_history WHERE code=? ORDER BY id DESC LIMIT 20", (code,))],
         "qualitative": rows(db.execute("SELECT * FROM qualitative_inputs WHERE code=?", (code,))),
+        "research": research_store.get(db, code),
         "quality_issues": rows(db.execute(
             "SELECT * FROM data_quality_issues WHERE code=? AND resolved=0 ORDER BY detected_at DESC LIMIT 30", (code,))),
     }
@@ -314,6 +316,28 @@ def put_rules(body: dict[str, Any], db: sqlite3.Connection = Depends(get_db)) ->
     set_setting(db, "rules", body)
     db.commit()
     return {"ok": True}
+
+
+class ApproveIn(BaseModel):
+    codes: list[str] = Field(min_length=1)
+    note: str = Field(min_length=2)
+
+
+@app.post("/api/research/approve")
+def approve_research(body: ApproveIn, db: sqlite3.Connection = Depends(get_db)) -> dict[str, Any]:
+    """暫定評価の前提を検証済みにする（承認）。承認後は承認済みルールで自動更新され、重要な変化時のみ再承認を求める。"""
+    from .analysis import METHOD_VERSION, run_scoring
+    n = research_store.approve(db, [c.upper() for c in body.codes], body.note, METHOD_VERSION)
+    d0 = db.execute("SELECT MAX(run_date) FROM scores").fetchone()[0]
+    if d0:
+        run_scoring(db, datetime.fromisoformat(d0).date())
+    return {"ok": True, "approved": n}
+
+
+@app.get("/api/research")
+def list_research(db: sqlite3.Connection = Depends(get_db)) -> list[dict[str, Any]]:
+    research_store.ensure_schema(db)
+    return [research_store.get(db, r["code"]) for r in db.execute("SELECT code FROM assumption_research ORDER BY code")]
 
 
 @app.get("/api/settings/weights")

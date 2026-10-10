@@ -77,6 +77,9 @@ export type ScoreRow = {
   sell_detail: { coverage?: number; valuation_side?: number; fundamental_side?: number; factors: Record<string, Factor> };
   buy_detail: {
     reason: string; method: string; v_over_p: number | null; years: number | null; assumption_origin: string;
+    assumption_status?: "unconfirmed" | "provisional" | "review_required" | "verified"; confidence?: string | null;
+    scenarios?: Record<string, { eps: number; per: number; theoretical_value: number | null; target_price: number | null; buy_score: number | null }>;
+    anchor_ratio?: number | null; data_issue?: string | null;
     inputs?: {
       target_year: number; fiscal_month_end: number; eps_forecast?: number | null; normalized_eps?: number | null;
       assumed_per?: number | null; required_return: number; safety_margin: number; reason: string;

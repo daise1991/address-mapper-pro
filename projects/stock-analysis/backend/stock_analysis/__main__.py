@@ -123,6 +123,11 @@ def main() -> None:
     sv.add_argument("--port", type=int, default=8000)
     sub.add_parser("gen-vapid", help="プッシュ通知用の鍵を生成して backend/.env に保存（未設定時のみ）")
     sub.add_parser("test-push", help="登録済みの端末にテスト通知を送る")
+    ir = sub.add_parser("import-research", help="調査前提案（JSON）を暫定評価として登録し、検算結果を表示")
+    ir.add_argument("path")
+    ap_ = sub.add_parser("approve", help="暫定評価の前提を検証済みにする（例: approve 6857 1944 --note 確認済み）")
+    ap_.add_argument("codes", nargs="+")
+    ap_.add_argument("--note", required=True)
     rs = sub.add_parser("rescore", help="最新（または指定日）の採点をやり直す。計算方式を更新したあとに使う")
     rs.add_argument("--date")
     ex = sub.add_parser("explain", help="銘柄の買い点数の計算根拠を表示（例: explain 5711）")
@@ -169,6 +174,37 @@ def main() -> None:
         n = conn.execute("SELECT COUNT(*) FROM push_subscriptions").fetchone()[0]
         sent = notify(conn, "test", "テスト通知", "株分析アプリからの通知テストです", "/")
         print(f"登録端末 {n}台中 {sent}台に送信しました" + ("" if n else "（先に画面の『この端末で通知を受け取る』を押してください）"))
+    elif args.cmd == "import-research":
+        from pathlib import Path
+
+        from . import research
+        conn = connect()
+        items = json.loads(Path(args.path).read_text(encoding="utf-8"))
+        d0 = date.fromisoformat(conn.execute("SELECT MAX(run_date) FROM scores").fetchone()[0] or datetime.now(JST).date().isoformat())
+        done = research.import_research(conn, items, d0, Path(args.path).name)
+        for it in items:
+            q = conn.execute("SELECT close FROM daily_quotes WHERE code=? AND date<=? ORDER BY date DESC LIMIT 1",
+                             (it["code"], d0.isoformat())).fetchone()
+            r = research.validate(it, q["close"] if q else None, d0, live_price=bool(q))
+            b = r["scenarios"]["base"]
+            print(f"{it['code']} {it.get('name', '')}: 終値 {r['price']} / 標準 理論価値 {b['theoretical_value']} 狙い目 {b['target_price']}"
+                  f" 買い {b['buy_score']} / 弱気 {r['scenarios']['bear']['theoretical_value']} 強気 {r['scenarios']['bull']['theoretical_value']}")
+            for w in r["warnings"]:
+                print(f"   ! {w}")
+            for c in research.cross_check(conn, it, d0):
+                print(f"   = {c}")
+        from .analysis import run_scoring
+        run_scoring(conn, d0)
+        print(f"{len(done)}銘柄を暫定評価として登録し、{d0} の採点に反映しました")
+    elif args.cmd == "approve":
+        from . import research
+        from .analysis import METHOD_VERSION, run_scoring
+        conn = connect()
+        n = research.approve(conn, [c.upper() for c in args.codes], args.note, METHOD_VERSION)
+        d0 = conn.execute("SELECT MAX(run_date) FROM scores").fetchone()[0]
+        if d0:
+            run_scoring(conn, date.fromisoformat(d0))
+        print(f"{n}銘柄を検証済みにしました")
     elif args.cmd == "rescore":
         from .analysis import run_scoring
         conn = connect()

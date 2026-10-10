@@ -1,0 +1,1367 @@
+[
+ {
+  "code": "6855",
+  "name": "日本電子材料",
+  "fiscal_month_end": 3,
+  "category": "cyclical",
+  "category_reason": "売上の99%超がプローブカードでメモリ設備投資サイクルに連動。純利益は38億円（2022/3）→6.2億円（2024/3）→54.5億円（2026/3）と大きく振れる。HBMは構造的追い風だが利益の振れは景気循環的",
+  "latest_company_forecast": {
+   "fiscal_period": "2027年3月期",
+   "eps": 457.4,
+   "net_income": 6700000000,
+   "operating_profit": 9450000000,
+   "disclosed_date": "2026-08-07",
+   "revised": "8/7上方修正: 売上330→364億円、営業利益74.5→94.5億円、純利益55→67億円。1Q経常利益31.9億円はコンセンサスを75%上回る",
+   "source_url": "https://scouter.monex.co.jp/news/detail/6855_20260807_act_20260807_160033_5"
+  },
+  "history": [
+   {
+    "fiscal_period": "2026年3月期",
+    "eps": 425.98,
+    "op_margin": 0.247,
+    "net_income": 5451000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2025年3月期",
+    "eps": 273.53,
+    "op_margin": 0.192,
+    "net_income": 3454000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2024年3月期",
+    "eps": 49.32,
+    "op_margin": 0.05,
+    "net_income": 622000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2023年3月期",
+    "eps": 207.25,
+    "op_margin": 0.154,
+    "net_income": 2612000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2022年3月期",
+    "eps": 311.17,
+    "op_margin": 0.212,
+    "net_income": 3802000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2021年3月期",
+    "eps": 189.98,
+    "op_margin": 0.146,
+    "net_income": 2000000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2020年3月期",
+    "eps": 101.62,
+    "op_margin": null,
+    "net_income": 1076000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2019年3月期",
+    "eps": 76.5,
+    "op_margin": null,
+    "net_income": 810000000,
+    "per_at_fy_end": null
+   }
+  ],
+  "split_notes": "分割・併合なし。公募増資173.9万株（6,478円、2026-03-17払込）とオーバーアロットメントで発行済約1,466万株（従来約1,280万株）。過去EPSは公表値のまま（希薄化前）",
+  "midterm_plan": {
+   "name": "2024-2026年度 JEMグループ中期経営計画",
+   "target_period": "2027年3月期まで",
+   "targets": "数値目標は未取得。メモリ・ロジック向けMEMSプローブカード（M-type）の強化と生産能力増強",
+   "url": "https://edinetdb.jp/company/E02043/midterm-plans/",
+   "published": "unknown"
+  },
+  "orders_and_drivers": "受注高・受注残は未取得。HBM/DRAM向けプローブカードが数量・単価とも高水準。2026/3期売上294億円（+23%）。2027/3期1Q 売上約96億円・営業利益約31億円・純利益約22億円。増資資金は増産投資と推定",
+  "normalized_eps": {
+   "value": 217,
+   "method": "2022〜2026/3期（山→谷→山の1サイクル）の平均純利益31.88億円÷現在株数1,466万株（8期平均では約169円）"
+  },
+  "scenarios_2029_estimate": {
+   "bear": {
+    "eps": 100,
+    "per": 14,
+    "rationale": "推計。メモリ投資の減速・HBM調整で純利益約15億円（2024/3と2021/3の中間）"
+   },
+   "base": {
+    "eps": 300,
+    "per": 13,
+    "rationale": "推計。純利益約44億円（正常化の約1.4倍、増産とHBM比率上昇を反映）。2027/3期予想より約35%低く、ブームを延長しない"
+   },
+   "bull": {
+    "eps": 560,
+    "per": 16,
+    "rationale": "推計。HBM成長が続き利益率約25%を維持、純利益約82億円"
+   }
+  },
+  "valuation_method": "normalized",
+  "required_return": 0.14,
+  "safety_margin": 0.25,
+  "rr_reason": "景気循環株の基準に上乗せ。スタンダード市場の小型株・単一製品・メモリ顧客集中の可能性・直近の希薄化・株価がサイクル高値圏",
+  "approx_price": {
+   "price": 8290,
+   "date": "2026-10-02",
+   "source": "検索スニペット（52週高値10,270円 2026-02-25）"
+  },
+  "sources": [
+   {
+    "title": "モネックス 8/7修正",
+    "url": "https://scouter.monex.co.jp/news/detail/6855_20260807_act_20260807_160033_5",
+    "published": "2026-08-07"
+   },
+   {
+    "title": "有価証券報告書 第67期",
+    "url": "https://finance-frontend-pc-dist.west.edge.storage-yahoo.jp/securities-report/20260624/S100YHWG.pdf",
+    "published": "2026-06-24"
+   },
+   {
+    "title": "有価証券報告書 第66期",
+    "url": "https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100W3ST.pdf",
+    "published": "2025-06-24"
+   },
+   {
+    "title": "EDINET DB 1Q",
+    "url": "https://edinetdb.jp/company/E02043/earnings/FY2027-Q1",
+    "published": "unknown"
+   },
+   {
+    "title": "公募増資情報",
+    "url": "https://www.ipokiso.com/po/company/2026/6855.html",
+    "published": "2026-02"
+   }
+  ],
+  "confidence": "中",
+  "confidence_reason": "過去推移と予想は複数スニペットで一致するが一次資料は未読。予想EPS 457.4円は新株発行の影響で旧株数ベースの値（約523円）と異なる",
+  "unverified": [
+   "全ページ取得失敗（プロキシ）。数値はスニペット由来",
+   "予想EPS 457.4円は決算短信で未照合",
+   "2021/3期純利益と2021〜2023/3期営業利益率は億円単位の概数",
+   "2024/3期営業利益（8.7億円と約20.5億円で情報が食い違い、8.7億円を採用）",
+   "2019〜2020/3期の営業利益率と期末PER",
+   "中計の数値目標と公表日",
+   "受注残",
+   "株数1,466万株は松井証券ページ由来"
+  ],
+  "target_year": 2029
+ },
+ {
+  "code": "5802",
+  "name": "住友電気工業",
+  "fiscal_month_end": 3,
+  "category": "cyclical",
+  "category_reason": "自動車・銅価格・為替の影響を受ける低利益率（2019〜2026/3期の営業利益率3.6〜8.2%）の複合企業。純利益は563億〜3,695億円で変動。AIデータセンター向け光・電力ケーブルという構造成長はあるが、景気・市況に敏感",
+  "latest_company_forecast": {
+   "fiscal_period": "2027年3月期",
+   "eps": 109,
+   "net_income": 340000000000,
+   "operating_profit": 450000000000,
+   "disclosed_date": "2026-07-31",
+   "revised": "7/31上方修正: 売上5.3→5.4兆円、営業利益4,250→4,500億円、純利益3,200→3,400億円（情報通信・自動車・産業素材の好調、円安、銅高）。前期は一過性益込みのため純利益は約8%減",
+   "source_url": "https://scouter.monex.co.jp/news/detail/5802_20260731_act_20260731_150016_2"
+  },
+  "history": [
+   {
+    "fiscal_period": "2026年3月期",
+    "eps": 118.45,
+    "op_margin": 0.082,
+    "net_income": 369500000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2025年3月期",
+    "eps": 62.0,
+    "op_margin": 0.069,
+    "net_income": 193771000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2024年3月期",
+    "eps": null,
+    "op_margin": 0.051,
+    "net_income": 149700000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2023年3月期",
+    "eps": 36.11,
+    "op_margin": 0.044,
+    "net_income": 112654000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2022年3月期",
+    "eps": 30.87,
+    "op_margin": 0.036,
+    "net_income": 96306000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2021年3月期",
+    "eps": 18.06,
+    "op_margin": 0.039,
+    "net_income": 56344000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2020年3月期",
+    "eps": 23.31,
+    "op_margin": 0.041,
+    "net_income": 72720000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2019年3月期",
+    "eps": 37.85,
+    "op_margin": 0.052,
+    "net_income": 118063000000,
+    "per_at_fy_end": null
+   }
+  ],
+  "split_notes": "1:4 分割（基準日2026-06-30、効力発生2026-07-01）。分割後発行済3,175,762,284株、流通株約31.2億株。過去EPSは公表値÷4",
+  "midterm_plan": {
+   "name": "中期経営計画2028",
+   "target_period": "2029年3月期",
+   "targets": "売上6兆円、営業利益6,000億円、税前ROIC15%以上、3年累計設備投資1兆円、グリーン・デジタル売上3.5兆円",
+   "url": "https://www2.jpx.co.jp/disc/58020/140120260511523405.pdf",
+   "published": "2026-05-12"
+  },
+  "orders_and_drivers": "データセンター向け光デバイス・光配線が情報通信をけん引。ワイヤーハーネスは堅調。2027/3期1Q 売上1.33兆円（+15.9%）、営業利益970億円（+61%）、純利益664億円（+89%）。電力ケーブル受注残などは未取得",
+  "normalized_eps": {
+   "value": 47,
+   "method": "2019〜2026/3期の平均純利益1,461億円÷現在株数約31.19億株（2026/3期は住友電設株売却益を含む）。別法: 営業利益率中央値4.75%×売上5.4兆円×0.65で約53円"
+  },
+  "scenarios_2029_estimate": {
+   "bear": {
+    "eps": 60,
+    "per": 11,
+    "rationale": "推計。AI投資の停止・自動車低迷・銅と円の反転。売上5.2兆円・営業利益率約5.5%、純利益約1,900億円"
+   },
+   "base": {
+    "eps": 105,
+    "per": 14,
+    "rationale": "推計。営業利益約4,800億円（中計6,000億円の8割）、純利益約3,300億円（正常化の約2倍。DC光・送電ケーブルへの構造転換と1兆円投資を反映、銅・為替の追い風は剥落と仮定）"
+   },
+   "bull": {
+    "eps": 140,
+    "per": 17,
+    "rationale": "推計。中計達成、営業利益6,000億円超、純利益約4,400億円"
+   }
+  },
+  "valuation_method": "normalized",
+  "required_return": 0.11,
+  "safety_margin": 0.15,
+  "rr_reason": "大型で流動性が高く5セグメントに分散、財務も堅固なため景気循環株の基準よりやや低く設定。AI光のプレミアムと銅の影響があるため安定企業水準までは下げない",
+  "approx_price": {
+   "price": 2080.5,
+   "date": "2026-09-18",
+   "source": "検索スニペット（予想PER19.1倍）。別スニペットで1,991円（日付不明）"
+  },
+  "sources": [
+   {
+    "title": "モネックス 7/31修正",
+    "url": "https://scouter.monex.co.jp/news/detail/5802_20260731_act_20260731_150016_2",
+    "published": "2026-07-31"
+   },
+   {
+    "title": "株式分割に関するお知らせ",
+    "url": "https://www2.jpx.co.jp/disc/58020/140120260511523374.pdf",
+    "published": "2026-05-12"
+   },
+   {
+    "title": "中期経営計画2028",
+    "url": "https://www2.jpx.co.jp/disc/58020/140120260511523405.pdf",
+    "published": "2026-05-12"
+   },
+   {
+    "title": "2023年3月期 決算短信",
+    "url": "https://www.fse.or.jp/files/lis_tkj/23051258020.pdf",
+    "published": "2023-05"
+   },
+   {
+    "title": "2022年3月期 決算短信",
+    "url": "https://www.fse.or.jp/files/lis_tkj/22051158021.pdf",
+    "published": "2022-05"
+   }
+  ],
+  "confidence": "中",
+  "confidence_reason": "会社予想・分割・中計は複数スニペット（JPX PDF表題含む）で一致。一部の過去値は成長率から逆算",
+  "unverified": [
+   "全ページ取得失敗（プロキシ）。数値はスニペット由来",
+   "2024/3期の純利益・営業利益率は2025/3期の伸び率から逆算、EPSは空欄（約48円と推計）",
+   "2025/3期EPSは概数",
+   "2021/3期の数値は企業の対応付けを推定",
+   "住友電設株売却益の規模",
+   "中計のROE目標",
+   "期末PER",
+   "10月の株価"
+  ],
+  "target_year": 2029
+ },
+ {
+  "code": "5801",
+  "name": "古河電気工業",
+  "fiscal_month_end": 3,
+  "category": "cyclical",
+  "category_reason": "銅・自動車部品・通信を持ち、純利益は2024/3期65億円→2026/3期725億円と大きく振れる。現在の最高益はAIデータセンター投資（光ファイバ・光部品）に依存",
+  "latest_company_forecast": {
+   "fiscal_period": "2027年3月期",
+   "eps": 149.25,
+   "net_income": 105000000000,
+   "operating_profit": null,
+   "disclosed_date": "2026-08-06",
+   "revised": "期初（5/12）純利益820億円・EPS約116.6円→8/6に経常利益1,430億円・純利益1,050億円へ上方修正。9/24に上期純利益を425→580億円に修正（通期据え置き）。修正後の営業利益は未取得",
+   "source_url": "https://finance.yahoo.co.jp/quote/5801.t/performance"
+  },
+  "history": [
+   {
+    "fiscal_period": "2026年3月期",
+    "eps": 103.0,
+    "op_margin": 0.049,
+    "net_income": 72514000000,
+    "per_at_fy_end": 27.94
+   },
+   {
+    "fiscal_period": "2025年3月期",
+    "eps": 47.3,
+    "op_margin": 0.039,
+    "net_income": 33357000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2024年3月期",
+    "eps": 9.2,
+    "op_margin": 0.011,
+    "net_income": 6500000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2023年3月期",
+    "eps": 22.4,
+    "op_margin": 0.014,
+    "net_income": 15800000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2022年3月期",
+    "eps": 14.2,
+    "op_margin": 0.012,
+    "net_income": 10000000000,
+    "per_at_fy_end": null
+   }
+  ],
+  "split_notes": "1:10 分割（2026-07-01）。発行済約7,056万株→約7.035億株。過去EPSは純利益÷約7.05億株で概算（2026/3期は1,030.17円÷10）",
+  "midterm_plan": {
+   "name": "Vision 2030実現に向けた経営方針",
+   "target_period": "2030年度",
+   "targets": "営業利益2,500億円（うちデータセンター関連約2,000億円）、営業利益率10%超、ROE20%、ROIC15%、2026〜2030年度投資6,500億円",
+   "url": "https://edinetdb.jp/company/E01332/midterm-plans/",
+   "published": "2026-05-19"
+  },
+  "orders_and_drivers": "1Q売上3,652億円（+24%）、営業利益255億円（+205%）をAIデータセンター向け光ソリューション・情報部品がけん引。2026年8月に光ファイバ・ローラブルリボンへ約1,000億円の増産投資（量産は2028年度下期）。9月にDC向け水冷モジュール量産開始。受注残は未取得",
+  "normalized_eps": {
+   "value": 58,
+   "method": "平常時営業利益率4%×2027/3期売上予想1.46兆円＝約584億円、純利益換算0.7で約409億円÷7.035億株（参考: 7期純利益平均では37.5円）"
+  },
+  "scenarios_2029_estimate": {
+   "bear": {
+    "eps": 55,
+    "per": 12,
+    "rationale": "推計。AI投資の調整と光ファイバ供給過剰で利益率が平常時水準に戻る"
+   },
+   "base": {
+    "eps": 110,
+    "per": 15,
+    "rationale": "推計。売上約1.55兆円×営業利益率約7.4%で純利益約770億円。DC事業の構造成長と増産投資を反映し、2027/3期の最高益（149円）は延長しない"
+   },
+   "bull": {
+    "eps": 200,
+    "per": 20,
+    "rationale": "推計。2030年度営業利益2,500億円目標どおりに進み、2029/3期に営業利益約2,000億円・純利益約1,400億円"
+   }
+  },
+  "valuation_method": "normalized",
+  "required_return": 0.13,
+  "safety_margin": 0.25,
+  "rr_reason": "景気循環株の基準。5月高値6,241円から一時3,100円台まで下落する高い変動性とAI投資サイクル依存のため安全余裕を上乗せ",
+  "approx_price": {
+   "price": 4096,
+   "date": "2026-10-09",
+   "source": "検索スニペット（取引時間中の可能性、10/8終値4,220円）"
+  },
+  "sources": [
+   {
+    "title": "Yahoo!ファイナンス 5801 業績",
+    "url": "https://finance.yahoo.co.jp/quote/5801.t/performance",
+    "published": "unknown"
+   },
+   {
+    "title": "株探 上期上方修正",
+    "url": "https://s.kabutan.jp/news/k202609240008/",
+    "published": "2026-09-24"
+   },
+   {
+    "title": "EDINETdb 中期経営計画",
+    "url": "https://edinetdb.jp/company/E01332/midterm-plans/",
+    "published": "2026-05-19"
+   },
+   {
+    "title": "光ファイバ増産",
+    "url": "https://businessnetwork.jp/article/36363/",
+    "published": "2026-08"
+   },
+   {
+    "title": "株式分割記事",
+    "url": "https://finance.limo.media/articles/466",
+    "published": "2026-07"
+   }
+  ],
+  "confidence": "低",
+  "confidence_reason": "決算短信を直接読めず、すべてスニペット経由。修正後の営業利益予想と2021/3期実績が未取得",
+  "unverified": [
+   "全数値（一次資料は遮断）",
+   "EPS 149.25円（Yahooスニペット）",
+   "2026/3期PER 27.94倍",
+   "2019・2020/3期の年度対応",
+   "2021/3期実績",
+   "修正後の2027/3期営業利益",
+   "中計の数値（AI要約）",
+   "10月の株価"
+  ],
+  "target_year": 2029
+ },
+ {
+  "code": "6479",
+  "name": "ミネベアミツミ",
+  "fiscal_month_end": 3,
+  "category": "cyclical",
+  "category_reason": "14期連続増収だが、利益はスマホ・自動車・半導体需要に左右され2020/3・2021/3・2024/3期に減益。多角化で振れ幅は中程度",
+  "latest_company_forecast": {
+   "fiscal_period": "2027年3月期",
+   "eps": 216.64,
+   "net_income": 87000000000,
+   "operating_profit": 120000000000,
+   "disclosed_date": "2026-08-05",
+   "revised": "8/5に純利益830→870億円に上方修正。前期の金融資産評価益がなくなるため減益予想",
+   "source_url": "https://scouter.monex.co.jp/news/detail/6479_20260805_act_20260805_153028_5"
+  },
+  "history": [
+   {
+    "fiscal_period": "2026年3月期",
+    "eps": 246.6,
+    "op_margin": 0.0625,
+    "net_income": 99000000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2025年3月期",
+    "eps": 148.1,
+    "op_margin": 0.062,
+    "net_income": 59457000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2024年3月期",
+    "eps": 134.5,
+    "op_margin": null,
+    "net_income": 54035000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2023年3月期",
+    "eps": 182.2,
+    "op_margin": null,
+    "net_income": 73152000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2022年3月期",
+    "eps": 171.7,
+    "op_margin": 0.082,
+    "net_income": 68935000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2021年3月期",
+    "eps": 96.5,
+    "op_margin": 0.052,
+    "net_income": 38759000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2020年3月期",
+    "eps": 114.5,
+    "op_margin": 0.06,
+    "net_income": 45975000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2019年3月期",
+    "eps": 149.8,
+    "op_margin": 0.081,
+    "net_income": 60142000000,
+    "per_at_fy_end": null
+   }
+  ],
+  "split_notes": "分割・併合は見つからず（未確認）。2026/3期以外のEPSは純利益÷現在株数約4.016億株で概算（自社株買いの影響で公表値とずれる）",
+  "midterm_plan": {
+   "name": "中期事業計画",
+   "target_period": "2029年3月期",
+   "targets": "売上2.5兆円・営業利益2,500億円（大型M&A込み）。オーガニックのみでは売上約1.8兆円",
+   "url": "https://eetimes.itmedia.co.jp/ee/articles/2605/13/news096_3.html",
+   "published": "unknown"
+  },
+  "orders_and_drivers": "1Q売上4,266億円（+16.3%）、営業利益263億円（+50.9%）、利益率4.8→6.2%。データセンター需要が成長要因、アクセスソリューションズは大幅減益。2026/3期は売上1兆6,644億円・営業利益1,040億円と過去最高、純利益990億円は金融資産評価益込み",
+  "normalized_eps": {
+   "value": 197,
+   "method": "2019〜2026/3期の平均営業利益率約6.5%×2027/3期売上予想1.69兆円＝約1,099億円、純利益換算0.72で約791億円÷4.016億株（参考: 8期純利益平均では155円）"
+  },
+  "scenarios_2029_estimate": {
+   "bear": {
+    "eps": 149,
+    "per": 11,
+    "rationale": "推計。売上1.6兆円・営業利益率5.2%（2024/3期型の低迷期）"
+   },
+   "base": {
+    "eps": 226,
+    "per": 15,
+    "rationale": "推計。オーガニック成長で売上1.85兆円・営業利益率6.8%・純利益約906億円"
+   },
+   "bull": {
+    "eps": 300,
+    "per": 18,
+    "rationale": "推計。M&A込みで売上2.1兆円・営業利益率8%、中計に接近"
+   }
+  },
+  "valuation_method": "normalized",
+  "required_return": 0.11,
+  "safety_margin": 0.15,
+  "rr_reason": "景気循環株だが多角化・連続増収・予想PER約17倍と過熱感が小さいため景気循環株の基準（12%/20%）より一段低く設定。大型M&Aの実行リスクは残る",
+  "approx_price": {
+   "price": 3650,
+   "date": "2026-10-09",
+   "source": "検索スニペット（予想PER16.8倍）"
+  },
+  "sources": [
+   {
+    "title": "モネックス 1Q決算速報",
+    "url": "https://scouter.monex.co.jp/news/detail/6479_20260805_act_20260805_153028_5",
+    "published": "2026-08-05"
+   },
+   {
+    "title": "EE Times 2026/3期決算",
+    "url": "https://eetimes.itmedia.co.jp/ee/articles/2605/13/news096_3.html",
+    "published": "2026-05-13"
+   },
+   {
+    "title": "決算短信 2026/3期",
+    "url": "https://www2.jpx.co.jp/disc/64790/140120260512523975.pdf",
+    "published": "2026-05-12"
+   },
+   {
+    "title": "決算短信 2022/3期",
+    "url": "https://www2.jpx.co.jp/disc/64790/140120220510538588.pdf",
+    "published": "2022-05-10"
+   }
+  ],
+  "confidence": "中",
+  "confidence_reason": "直近予想・修正・株価・2019〜2022/3期実績は複数ソースで整合。2023・2024/3期と期末PERは未確認",
+  "unverified": [
+   "全数値（一次資料PDFは遮断）",
+   "2023・2024/3期の純利益・営業利益（報道間で食い違い）",
+   "2023・2024/3期の売上",
+   "2027/3期営業利益1,200億円が修正後の値か",
+   "中計の公表日",
+   "分割が無いこと",
+   "期末PER"
+  ],
+  "target_year": 2029
+ },
+ {
+  "code": "3176",
+  "name": "三洋貿易",
+  "fiscal_month_end": 9,
+  "category": "stable",
+  "category_reason": "2021〜2025/9期の純利益は42.6〜52.1億円の狭い範囲、営業利益率4.8〜6.1%。化学品・ゴム・自動車資材・科学機器の多角的商社。自動車の影響はあるが深い景気循環株ではない",
+  "latest_company_forecast": {
+   "fiscal_period": "2026年9月期",
+   "eps": 104.1,
+   "net_income": 6000000000,
+   "operating_profit": 7500000000,
+   "disclosed_date": "2026-08-07",
+   "revised": "2回上方修正（5/12に純利益48億円、8/7に売上1,380億円・営業利益75億円・純利益60億円）。純利益には政策保有株売却益（一過性）を含む",
+   "source_url": "https://www2.jpx.co.jp/disc/31760/140120260806513249.pdf"
+  },
+  "history": [
+   {
+    "fiscal_period": "2025年9月期",
+    "eps": 80.12,
+    "op_margin": 0.0485,
+    "net_income": 4615000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2024年9月期",
+    "eps": 90.4,
+    "op_margin": 0.0547,
+    "net_income": 5207000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2023年9月期",
+    "eps": 83.2,
+    "op_margin": 0.054,
+    "net_income": 4785000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2022年9月期",
+    "eps": 74.84,
+    "op_margin": 0.0478,
+    "net_income": 4296000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2021年9月期",
+    "eps": 74.26,
+    "op_margin": 0.0613,
+    "net_income": 4256000000,
+    "per_at_fy_end": null
+   }
+  ],
+  "split_notes": "1:2 分割（2026-07-01、5/12発表）。過去EPSはすべて分割後基準に換算（2023・2024期は純利益÷約5,750万株で推計）",
+  "midterm_plan": {
+   "name": "SANYO VISION 2028",
+   "target_period": "2028年9月期",
+   "targets": "営業利益90億円、ROE 10〜12%、PBR 1倍超、自己資本比率50%以上",
+   "url": "https://edinetdb.jp/company/E02548/midterm-plans/",
+   "published": "unknown"
+  },
+  "orders_and_drivers": "3Q累計経常利益67.1億円（+11.2%、価格改定）。創立80周年記念配当10円と自社株買い方針を発表。商社のため受注残なし。2025/9期は人件費と基幹システム償却で営業利益9.1%減",
+  "normalized_eps": {
+   "value": 80.1,
+   "method": "2021〜2025/9期の純利益中央値46.15億円÷現在株数約5,760万株（2026/9期は一過性益のため除外）"
+  },
+  "scenarios_2029_estimate": {
+   "bear": {
+    "eps": 79,
+    "per": 9,
+    "rationale": "推計。自動車・化学品需要の鈍化で純利益約45億円（正常化水準）"
+   },
+   "base": {
+    "eps": 100,
+    "per": 11,
+    "rationale": "推計。営業利益約82億円（VISION 2028の90億円に届かず）、純利益約57億円、自社株買いで約5,650万株"
+   },
+   "bull": {
+    "eps": 119,
+    "per": 13,
+    "rationale": "推計。営業利益90億円超を達成、純利益約66億円、約5,550万株、PBR1倍超への評価向上"
+   }
+  },
+  "valuation_method": "per",
+  "required_return": 0.1,
+  "safety_margin": 0.15,
+  "rr_reason": "安定型だが薄利・自動車依存・一過性益込みの予想のため安定企業の範囲の上限",
+  "approx_price": {
+   "price": 1187,
+   "date": "2026-09-18",
+   "source": "検索スニペット（予想PER11.4倍）"
+  },
+  "sources": [
+   {
+    "title": "3Q決算・業績予想修正（TDnet）",
+    "url": "https://www2.jpx.co.jp/disc/31760/140120260806513249.pdf",
+    "published": "2026-08-07"
+   },
+   {
+    "title": "モネックス 業績修正",
+    "url": "https://scouter.monex.co.jp/news/detail/3176_20260807_act_20260807_140038_2",
+    "published": "2026-08-07"
+   },
+   {
+    "title": "2022/9期 決算短信",
+    "url": "https://www2.jpx.co.jp/disc/31760/140120221108559147.pdf",
+    "published": "2022-11-08"
+   },
+   {
+    "title": "株式分割のお知らせ",
+    "url": "https://www2.jpx.co.jp/disc/31760/140120260508519020.pdf",
+    "published": "2026-05-12"
+   }
+  ],
+  "confidence": "中",
+  "confidence_reason": "主要数値は複数スニペットで一致。一次資料は未読、2023・2024期EPSは推計",
+  "unverified": [
+   "一次資料は遮断、スニペット由来",
+   "2026/9期EPS 104.1円（IFISと推計）",
+   "2023・2024期EPSは概算株数による推計",
+   "2023期営業利益率は推計",
+   "VISION 2028の公表日・全目標",
+   "期末PER",
+   "9/18以降の株価"
+  ],
+  "target_year": 2029
+ },
+ {
+  "code": "6269",
+  "name": "三井海洋開発",
+  "fiscal_month_end": 12,
+  "category": "cyclical",
+  "category_reason": "海洋石油の設備投資サイクルと一括請負EPCIの執行リスクに依存。2019〜2021年頃に補修引当・ブラジル操業問題で赤字。現在はFPSO建造ピークで過去最高益",
+  "latest_company_forecast": {
+   "fiscal_period": "2026年12月期",
+   "eps": 847.4,
+   "net_income": 57916000000,
+   "operating_profit": null,
+   "disclosed_date": "2026-02-13",
+   "revised": "純利益3.7億ドル予想を1Q・1Hで据え置き（1H純利益2.24億ドル、進捗60%）。円換算は会社換算（約156.5円/ドル）",
+   "source_url": "https://www.nikkei.com/article/DGXZRST0558977T10C26A2000000/"
+  },
+  "history": [
+   {
+    "fiscal_period": "2025年12月期",
+    "eps": 792,
+    "op_margin": null,
+    "net_income": 54100000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2024年12月期",
+    "eps": 485,
+    "op_margin": null,
+    "net_income": 33060000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2023年12月期",
+    "eps": 233,
+    "op_margin": null,
+    "net_income": 14480000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2022年12月期",
+    "eps": 99,
+    "op_margin": null,
+    "net_income": 5610000000,
+    "per_at_fy_end": null
+   }
+  ],
+  "split_notes": "分割なし。増資で株数が約5,700万株（2022）→約6,840万株に増加（希薄化）。過去実績はドル建てを150円/ドルで換算",
+  "midterm_plan": {
+   "name": "中期経営計画 2024-2026",
+   "target_period": "2026年12月期",
+   "targets": "純利益目標を1.75億→3億ドル、調整後EBITDAを3億→4.5億ドルに引き上げ（2025-02-13）。現予想3.7億ドルは計画超過",
+   "url": "https://edinetdb.jp/company/E01725/midterm-plans/",
+   "published": "2024-02-14"
+  },
+  "orders_and_drivers": "1H26: 売上24.47億ドル（+18%）、純利益2.24億ドル（+54%）、受注は4.81億ドルのみ。受注残約170億ドル（1H25の過去最高255億ドルから減少）。Hammerhead・Gato do Mato のFPSO建造2年目が主因。既存船団のリース・O&M収入が下支え。配当200円予定",
+  "normalized_eps": {
+   "value": 476,
+   "method": "2022〜2026予想の平均純利益2.17億ドル÷6,835万株×150円。2019〜21年の赤字を含めると300円未満になるため甘めの値"
+  },
+  "scenarios_2029_estimate": {
+   "bear": {
+    "eps": 395,
+    "per": 8,
+    "rationale": "推計。受注枯渇・受注残の減少またはコスト超過。純利益2億ドル、135円/ドル"
+   },
+   "base": {
+    "eps": 834,
+    "per": 10,
+    "rationale": "推計。現案件完了後にEPCI利益は減るがリース・O&Mが成長。純利益3.8億ドル、約6,835万株、150円/ドル"
+   },
+   "bull": {
+    "eps": 1134,
+    "per": 12,
+    "rationale": "推計。ブラジル・ガイアナでFPSO受注が活況。純利益5億ドル、155円/ドル"
+   }
+  },
+  "valuation_method": "normalized",
+  "required_return": 0.13,
+  "safety_margin": 0.2,
+  "rr_reason": "景気循環株の範囲。大型案件損失の前歴と為替換算リスク。過去最高益を延長しない",
+  "approx_price": {
+   "price": 8794,
+   "date": "2026-10-07",
+   "source": "検索スニペット（予想PER10.4倍）"
+  },
+  "sources": [
+   {
+    "title": "1H 2026 投資家向け資料",
+    "url": "https://www.modec.com/ir/library/presentation/assets/pdf/2026-2Q_ir-presentaion_en.pdf",
+    "published": "2026-08-07"
+   },
+   {
+    "title": "2025年通期決算",
+    "url": "https://www.modec.com/ir/library/result/assets/pdf/2025_YE_results_en.pdf",
+    "published": "2026-02"
+   },
+   {
+    "title": "Quartr 2Q 2026 要約",
+    "url": "https://quartr.com/events/modec-inc-6269-q2-2026_F3BVDeiE",
+    "published": "2026-08"
+   },
+   {
+    "title": "日経 1Q決算",
+    "url": "https://www.nikkei.com/article/DGXZRST0527689T10C26A5000000/",
+    "published": "2026-05"
+   },
+   {
+    "title": "OilNow 1H25受注残",
+    "url": "https://oilnow.gy/news/modecs-h1-profit-climbs-on-project-wins-backlog-swells-to-record-us25-5-billion/",
+    "published": "2025-08"
+   }
+  ],
+  "confidence": "低",
+  "confidence_reason": "modec.com・jpxは遮断。2022〜23年はYahoo Finance経由のスニペット。2019〜21年の赤字額は未確定。営業利益は未取得",
+  "unverified": [
+   "一次資料は遮断、スニペット由来",
+   "2026予想の開示日（2026-02-13と仮定）",
+   "1H（2026-08-07）で予想変更があったか",
+   "2022・2023年の純利益・EPS",
+   "2019〜2021年の赤字額（情報が食い違う）",
+   "全年度の営業利益・利益率",
+   "受注残170億ドルは第三者要約",
+   "為替レートは推計（会社換算は約156.5円）",
+   "期末PER"
+  ],
+  "target_year": 2029
+ },
+ {
+  "code": "7012",
+  "name": "川崎重工業",
+  "fiscal_month_end": 3,
+  "category": "cyclical",
+  "category_reason": "二輪・航空機（ボーイング）・エネルギー・ロボットが景気循環的（2021/3期 純損失193億円、2024/3期 純利益253億円まで減少）。防衛は構造的成長だがグループ全体の利益は大きく振れる",
+  "latest_company_forecast": {
+   "fiscal_period": "2027年3月期",
+   "eps": null,
+   "net_income": 115000000000,
+   "operating_profit": 180000000000,
+   "disclosed_date": "2026-08-07",
+   "revised": "8/7上方修正: 事業利益1,700→1,800億円、純利益1,100→1,150億円（ロボット特許和解・半導体装置向けロボット・米関税還付）。受注予想は1,200億円減の2.42兆円。会社EPS予想は未確認（純利益÷約8.35億株で約137.7円と推計）",
+   "source_url": "https://newswitch.jp/p/49966"
+  },
+  "history": [
+   {
+    "fiscal_period": "2026年3月期",
+    "eps": 129.41,
+    "op_margin": 0.063,
+    "net_income": 108157000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2025年3月期",
+    "eps": 105.4,
+    "op_margin": 0.067,
+    "net_income": 88000000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2024年3月期",
+    "eps": 30.3,
+    "op_margin": null,
+    "net_income": 25300000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2023年3月期",
+    "eps": 63.5,
+    "op_margin": null,
+    "net_income": 53029000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2022年3月期",
+    "eps": 26.1,
+    "op_margin": null,
+    "net_income": 21801000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2021年3月期",
+    "eps": -23.1,
+    "op_margin": null,
+    "net_income": -19332000000,
+    "per_at_fy_end": null
+   }
+  ],
+  "split_notes": "1:5 株式分割（基準日2026-03-31、効力発生2026-04-01、発行済 1.679億→8.396億株）。2025/3期以前のEPSは約8.35億株で換算した推計",
+  "midterm_plan": {
+   "name": "Group Vision 2030 / 2030年度事業目標",
+   "target_period": "2031年3月期",
+   "targets": "売上3兆円、事業利益率10%超、防衛売上7,000〜8,000億円（2030年代半ばに1兆円超）",
+   "url": "https://tsumuraya.hub.hit-u.ac.jp/special03/2026/7012.pdf",
+   "published": "unknown"
+  },
+  "orders_and_drivers": "受注: 2025/3期 過去最高2.6307兆円、2027/3期予想2.42兆円。防衛受注2026/3期5,340億円（二次情報）。受注残は未確認。要因: 防衛予算増、787生産レート、米国パワースポーツ、半導体装置向けロボット、水素",
+  "normalized_eps": {
+   "value": 67,
+   "method": "2021/3〜2027/3予想の7期平均純利益560億円÷約8.35億株（防衛の構造的上積みは過小評価の可能性）"
+  },
+  "scenarios_2029_estimate": {
+   "bear": {
+    "eps": 85,
+    "per": 11,
+    "rationale": "推計。二輪・航空の下振れと防衛採算の圧迫で純利益約700億円（サイクル平均＋防衛分）"
+   },
+   "base": {
+    "eps": 160,
+    "per": 14,
+    "rationale": "推計。売上約2.8兆円・事業利益率約7.5%で純利益約1,340億円（2030年度計画の途中）"
+   },
+   "bull": {
+    "eps": 215,
+    "per": 17,
+    "rationale": "推計。2030年度計画（売上3兆円・利益率10%）を前倒し達成、純利益約1,800億円"
+   }
+  },
+  "valuation_method": "normalized",
+  "required_return": 0.13,
+  "safety_margin": 0.2,
+  "rr_reason": "景気循環＋過去のボーイング・エネルギー案件損失など執行リスク。防衛受注で可視性は高まるため12〜15%の中間",
+  "approx_price": {
+   "price": 2404.5,
+   "date": "2026-09-18",
+   "source": "検索スニペット（分割後）"
+  },
+  "sources": [
+   {
+    "title": "日刊工業 川重 上方修正",
+    "url": "https://newswitch.jp/p/49966",
+    "published": "2026-08"
+   },
+   {
+    "title": "松井証券 7012 決算",
+    "url": "https://finance.matsui.co.jp/stock/7012/settlement/index",
+    "published": "unknown"
+   },
+   {
+    "title": "株探 川重 1Q",
+    "url": "https://s.kabutan.jp/news/k202608070024/",
+    "published": "2026-08-07"
+   },
+   {
+    "title": "株式分割まとめ",
+    "url": "https://www.tousaiblog.org/kawajuu-bunkatsu",
+    "published": "2026-02"
+   },
+   {
+    "title": "carview 26/3期決算",
+    "url": "https://carview.yahoo.co.jp/news/detail/5de69f70b3f19190a9eaa97cf443c5e3aea50444/",
+    "published": "2026-05"
+   },
+   {
+    "title": "防衛売上上方修正",
+    "url": "https://newswitch.jp/p/45657",
+    "published": "unknown"
+   }
+  ],
+  "confidence": "中",
+  "confidence_reason": "2024/3〜2026/3期と2027/3期予想は複数ソースで一致。古い年度・受注残・PER推移・会社EPS予想は一次資料が取得できず未検証",
+  "unverified": [
+   "一次資料はすべてプロキシで遮断。数値は検索スニペット由来",
+   "2027/3期の会社EPS予想（約137.7円は推計）",
+   "2022/3期純利益の会計基準、2023/3期は修正後数値",
+   "2025/3期以前のEPSは約8.35億株で換算した推計",
+   "受注残・2026/3期受注実績",
+   "PER推移すべて",
+   "2030年度目標は統合報告書の二次要約",
+   "株価は9/18時点"
+  ],
+  "target_year": 2029
+ },
+ {
+  "code": "1944",
+  "name": "きんでん",
+  "fiscal_month_end": 3,
+  "category": "stable",
+  "category_reason": "電気工事。2024/3期までの純利益は260〜350億円で横ばい。データセンター・半導体工場・再開発と価格転嫁で営業利益率6.5%→12%。安定的だが建設サイクルの影響があるため、ピーク利益率を延長せず正常化EPSで評価",
+  "latest_company_forecast": {
+   "fiscal_period": "2027年3月期",
+   "eps": 406,
+   "net_income": 70000000000,
+   "operating_profit": 97000000000,
+   "disclosed_date": "2026-04-27",
+   "revised": "1Q（2026-07-29）で据え置き。純利益+0.8%でもEPS+16%なのは関西電力からの自己株TOB（3,350万株）による",
+   "source_url": "https://www2.jpx.co.jp/disc/19440/081220260420506537_tse-acedjpsm-19440-20260427319440-ixbrl.htm"
+  },
+  "history": [
+   {
+    "fiscal_period": "2026年3月期",
+    "eps": 350.53,
+    "op_margin": 0.12,
+    "net_income": 69447000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2025年3月期",
+    "eps": 236.26,
+    "op_margin": 0.086,
+    "net_income": 47250000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2024年3月期",
+    "eps": null,
+    "op_margin": 0.065,
+    "net_income": 33553000000,
+    "per_at_fy_end": null
+   }
+  ],
+  "split_notes": "分割なし。自己株TOB（関西電力等から3,350万株、6,677円、2026/4/28〜6/1）で株数減少、関電持分37.13%→24.33%。TOB後の株数約1.65億株は推計",
+  "midterm_plan": {
+   "name": "Sustainable Growth 2026",
+   "target_period": "2021〜2026年度",
+   "targets": "2026年度 売上約7,000億円・営業利益約500億円（2年前倒し達成）、配当性向40%、総還元性向50〜60%。後継計画は未確認",
+   "url": "https://www2.jpx.co.jp/disc/19440/140120210426499746.pdf",
+   "published": "2021-04-26"
+  },
+  "orders_and_drivers": "受注高・受注残はスニペットで確認できず（決算短信の個別受注に記載）。要因: データセンター、半導体工場、関西の再開発、価格転嫁、人手不足による価格決定力。2027/3期1Q 売上+14.8%、営業利益+89%",
+  "normalized_eps": {
+   "value": 334,
+   "method": "2024/3〜2027/3予想の平均純利益551億円÷TOB後約1.65億株"
+  },
+  "scenarios_2029_estimate": {
+   "bear": {
+    "eps": 315,
+    "per": 13,
+    "rationale": "推計。建設サイクル減速で売上約7,800億円・利益率約9%、純利益約520億円"
+   },
+   "base": {
+    "eps": 420,
+    "per": 15,
+    "rationale": "推計。売上約8,600億円・利益率約11%、純利益約690億円（約1.65億株）"
+   },
+   "bull": {
+    "eps": 525,
+    "per": 18,
+    "rationale": "推計。売上約9,300億円・利益率12.5%維持、純利益約840億円＋追加自社株買い（約1.6億株）"
+   }
+  },
+  "valuation_method": "normalized",
+  "required_return": 0.1,
+  "safety_margin": 0.15,
+  "rr_reason": "ネットキャッシュの安定企業だが利益率はピーク圏。平均回帰リスクを反映し安定企業の初期値（8〜10%/10%）より保守的に設定",
+  "approx_price": {
+   "price": 7011,
+   "date": "2026-09-24",
+   "source": "検索スニペット（PER16.5倍・PBR1.74倍）"
+  },
+  "sources": [
+   {
+    "title": "2026年3月期 決算短信",
+    "url": "https://www2.jpx.co.jp/disc/19440/081220260420506537_tse-acedjpsm-19440-20260427319440-ixbrl.htm",
+    "published": "2026-04-27"
+   },
+   {
+    "title": "2027年3月期 1Q決算短信",
+    "url": "https://www2.jpx.co.jp/disc/19440/081220260728501118_tse-qcedjpsm-19440-20260729319440-ixbrl.htm",
+    "published": "2026-07-29"
+   },
+   {
+    "title": "関西電力 TOB応募結果",
+    "url": "https://www.kepco.co.jp/ir/brief/disclosure/pdf/kaiji20260602_1.pdf",
+    "published": "2026-06-02"
+   },
+   {
+    "title": "logmi 業績",
+    "url": "https://finance.logmi.jp/companies/1600",
+    "published": "unknown"
+   },
+   {
+    "title": "SG2026 資本政策",
+    "url": "https://www2.jpx.co.jp/disc/19440/140120250117552007.pdf",
+    "published": "2025-01-17"
+   }
+  ],
+  "confidence": "中",
+  "confidence_reason": "2024/3〜2026/3期と会社予想は複数ソースで一致。2024/3期以前の推移・受注・PER推移・TOB後株数は未取得",
+  "unverified": [
+   "一次資料はすべてプロキシで遮断。数値は検索スニペット由来",
+   "受注高・受注残",
+   "2024/3期以前の純利益・EPS",
+   "TOB後の正確な株数（約1.65億株は推計）",
+   "SG2026後の新中計",
+   "PER推移すべて",
+   "株価は9/24時点"
+  ],
+  "target_year": 2029
+ },
+ {
+  "code": "5032",
+  "name": "ANYCOLOR",
+  "fiscal_month_end": 4,
+  "category": "growth",
+  "category_reason": "2022/4→2026/4期で売上約4倍・営業利益率30〜39%。ただし2027/4期は増収減益予想で成長が鈍化。人気タレント依存（ヒット型）",
+  "latest_company_forecast": {
+   "fiscal_period": "2027年4月期",
+   "eps": 217.0,
+   "net_income": 13011000000,
+   "operating_profit": 19000000000,
+   "disclosed_date": "2026-06-10",
+   "revised": "レンジ予想（売上560〜600億円、営業利益180〜200億円、EPS 205.6〜228.45円）の中央値。1Q（2026-09-09）で据え置き、1Q営業利益63.9億円は会社1Q計画を上回る",
+   "source_url": "https://gamebiz.jp/news/432607"
+  },
+  "history": [
+   {
+    "fiscal_period": "2026年4月期",
+    "eps": 231.61,
+    "op_margin": 0.362,
+    "net_income": 14091000000,
+    "per_at_fy_end": null
+   },
+   {
+    "fiscal_period": "2025年4月期",
+    "eps": 188.57,
+    "op_margin": 0.38,
+    "net_income": 11511000000,
+    "per_at_fy_end": 19.6
+   },
+   {
+    "fiscal_period": "2024年4月期",
+    "eps": 139.6,
+    "op_margin": 0.386,
+    "net_income": 8700000000,
+    "per_at_fy_end": 15.7
+   },
+   {
+    "fiscal_period": "2023年4月期",
+    "eps": 111.0,
+    "op_margin": 0.37,
+    "net_income": 6698000000,
+    "per_at_fy_end": 23.3
+   },
+   {
+    "fiscal_period": "2022年4月期",
+    "eps": null,
+    "op_margin": 0.297,
+    "net_income": 2793000000,
+    "per_at_fy_end": null
+   }
+  ],
+  "split_notes": "1:2 分割（2023-08-01）。2023/4期EPSは222円→111円に換算",
+  "midterm_plan": {
+   "name": "中期経営方針（2024）",
+   "target_period": "2027年4月期",
+   "targets": "2024/4期比で売上+88%・営業利益+94%（売上約600億円・営業利益約240億円と推計）、配当性向30%以上。現計画は営業利益で未達見込み、見直し中との報道",
+   "url": "https://www.moguravr.com/anycolor-2024-management-policy/",
+   "published": "2024-06"
+  },
+  "orders_and_drivers": "コマース（グッズ・周年イベント・にじフェス）が2026/4期売上556.8億円（+29.9%）をけん引。4Qに棚卸評価損約18億円。2027/4期は人件費増で減益計画。1Q売上166.2億円（+5.4%）。主要タレント依存と英語圏展開がリスク",
+  "normalized_eps": {
+   "value": 217,
+   "method": "景気循環株ではないため会社予想中央値（2025〜2027予想の平均は約213円）"
+  },
+  "scenarios_2029_estimate": {
+   "bear": {
+    "eps": 180,
+    "per": 10,
+    "rationale": "推計。タレント流出・ファン支出鈍化で売上横ばい約560億円、営業利益率30%、純利益約108億円"
+   },
+   "base": {
+    "eps": 255,
+    "per": 15,
+    "rationale": "推計。売上年7%成長で約660億円、営業利益率34%、純利益約153億円、小幅な自社株買い"
+   },
+   "bull": {
+    "eps": 340,
+    "per": 20,
+    "rationale": "推計。海外・ライセンス・新人で売上約800億円、営業利益率37%、純利益約205億円"
+   }
+  },
+  "valuation_method": "per",
+  "required_return": 0.12,
+  "safety_margin": 0.2,
+  "rr_reason": "黒字成長株の範囲（10〜12%/15%）だが、ヒット依存・主要タレント依存・炎上リスク・減益計画を踏まえ安全余裕を20%に引き上げ",
+  "approx_price": {
+   "price": 3045,
+   "date": "2026-10-05",
+   "source": "検索スニペット（52週レンジ2,007〜4,900円）"
+  },
+  "sources": [
+   {
+    "title": "gamebiz 2027/4期計画",
+    "url": "https://gamebiz.jp/news/432607",
+    "published": "2026-06"
+   },
+   {
+    "title": "gamebiz 2026/4期決算",
+    "url": "https://gamebiz.jp/news/427533",
+    "published": "2026-06-10"
+   },
+   {
+    "title": "MoguraVR 1Q",
+    "url": "https://www.moguravr.com/?p=367260",
+    "published": "2026-09-09"
+   },
+   {
+    "title": "TDnet 決算短信",
+    "url": "https://www2.jpx.co.jp/disc/50320/140120260610567144.pdf",
+    "published": "2026-06-10"
+   },
+   {
+    "title": "EDINET DB",
+    "url": "https://edinetdb.jp/company/E37573",
+    "published": "unknown"
+   }
+  ],
+  "confidence": "中",
+  "confidence_reason": "2026/4期実績と2027/4期予想は複数スニペットで一致。一次資料PDFは未読、古い年度は概数",
+  "unverified": [
+   "決算短信PDFはプロキシで遮断。数値はスニペット由来",
+   "2024/4期純利益と2022〜2024期営業利益は概数",
+   "2022/4期EPS未取得",
+   "期末PERはEDINET DB（株価時点不明）",
+   "2024年中計の詳細と新計画の有無",
+   "株数約6,080万株はNI÷EPSで逆算"
+  ],
+  "target_year": 2029
+ },
+ {
+  "code": "6857",
+  "name": "アドバンテスト",
+  "fiscal_month_end": 3,
+  "category": "cyclical",
+  "category_reason": "半導体テスター。2024/3期に営業利益51%減。現在はAI/HBM需要による過去最高益で、純利益には金融商品評価益を含む",
+  "latest_company_forecast": {
+   "fiscal_period": "2027年3月期",
+   "eps": 911.64,
+   "net_income": 660000000000,
+   "operating_profit": 846000000000,
+   "disclosed_date": "2026-07-29",
+   "revised": "2026-07-29上方修正: 売上1.42→1.714兆円、営業利益6,275→8,460億円、純利益4,655→6,600億円（推論AI・DRAMテスター需要）。2Q決算は10/28予定",
+   "source_url": "https://www.advantest.com/en/news/2026/qnpuno0000000cr7-att/E_FR_FY2026_1Q.pdf"
+  },
+  "history": [
+   {
+    "fiscal_period": "2026年3月期",
+    "eps": 515,
+    "op_margin": 0.442,
+    "net_income": 375400000000,
+    "per_at_fy_end": 39.5
+   },
+   {
+    "fiscal_period": "2025年3月期",
+    "eps": 219,
+    "op_margin": 0.293,
+    "net_income": 161200000000,
+    "per_at_fy_end": 29.6
+   },
+   {
+    "fiscal_period": "2024年3月期",
+    "eps": 84,
+    "op_margin": 0.168,
+    "net_income": 62300000000,
+    "per_at_fy_end": 80.8
+   },
+   {
+    "fiscal_period": "2023年3月期",
+    "eps": 174.25,
+    "op_margin": 0.299,
+    "net_income": 130400000000,
+    "per_at_fy_end": 17.4
+   },
+   {
+    "fiscal_period": "2022年3月期",
+    "eps": 112.5,
+    "op_margin": 0.275,
+    "net_income": 87300000000,
+    "per_at_fy_end": 21.5
+   },
+   {
+    "fiscal_period": "2021年3月期",
+    "eps": 88.5,
+    "op_margin": 0.226,
+    "net_income": 69800000000,
+    "per_at_fy_end": 27.4
+   }
+  ],
+  "split_notes": "1:4 分割（2023-10-01）。2021〜2023/3期EPSは÷4で換算",
+  "midterm_plan": {
+   "name": "第3次中期経営計画（修正後）",
+   "target_period": "2025/3〜2027/3期の3年平均",
+   "targets": "売上8,350〜9,300億円、営業利益率33〜36%、純利益2,070〜2,480億円、EPS 284〜341円（既に大幅超過）",
+   "url": "https://www.advantest.com/ja/news/2025/g2l53r0000000obg-att/J_Info_20251028_01.pdf",
+   "published": "2025-10-28"
+  },
+  "orders_and_drivers": "受注・受注残の数値は未取得。1Q売上3,675億円（+39.3%）、営業利益1,900億円（+53.3%）。2026年テスター市場見通しを130〜145億ドルに引き上げ（AI/HPC向けSoC・HBM/DRAM）。前倒しで増産投資",
+  "normalized_eps": {
+   "value": 384,
+   "method": "2023/3〜2027/3予想の5期平均純利益2,779億円÷現在株数約7.24億株（谷と山を1回ずつ含む）。7期中央値では約180円（AIによる構造的上振れを過小評価）"
+  },
+  "scenarios_2029_estimate": {
+   "bear": {
+    "eps": 360,
+    "per": 20,
+    "rationale": "推計。2024/3期型の下降局面で純利益約2,600億円（ピーク比約6割減）。谷ではPERが高くなりやすい"
+   },
+   "base": {
+    "eps": 730,
+    "per": 22,
+    "rationale": "推計。AIテスト需要は続くが伸びは鈍化。売上約1.8兆円、営業利益率約42%、一過性の金融収益を除く純利益約5,300億円"
+   },
+   "bull": {
+    "eps": 1150,
+    "per": 30,
+    "rationale": "推計。AIとテスト工程の増加が持続。売上約2.4兆円、営業利益率48%、純利益約8,300億円"
+   }
+  },
+  "valuation_method": "normalized",
+  "required_return": 0.13,
+  "safety_margin": 0.25,
+  "rr_reason": "景気循環株の範囲（12〜15%/20%）。ピーク利益率・過去最高予想・予想PER約42倍（正常化EPSの約100倍）・少数のAI顧客依存のため安全余裕を25%に引き上げ",
+  "approx_price": {
+   "price": 38630,
+   "date": "2026-10-02",
+   "source": "検索スニペット（時価総額約28.3兆円）"
+  },
+  "sources": [
+   {
+    "title": "1Q決算短信（英文）",
+    "url": "https://www.advantest.com/en/news/2026/qnpuno0000000cr7-att/E_FR_FY2026_1Q.pdf",
+    "published": "2026-07-29"
+   },
+   {
+    "title": "モネックス 上方修正",
+    "url": "https://scouter.monex.co.jp/news/detail/6857_20260729_act_20260729_153012_6",
+    "published": "2026-07-29"
+   },
+   {
+    "title": "Newsweek Japan（ロイター）",
+    "url": "https://www.newsweekjapan.jp/articles/-/329727",
+    "published": "2026-07"
+   },
+   {
+    "title": "中計修正",
+    "url": "https://www.advantest.com/ja/news/2025/g2l53r0000000obg-att/J_Info_20251028_01.pdf",
+    "published": "2025-10-28"
+   },
+   {
+    "title": "EDINET DB",
+    "url": "https://edinetdb.jp/company/E01950",
+    "published": "unknown"
+   }
+  ],
+  "confidence": "中",
+  "confidence_reason": "会社予想と過去推移は複数スニペットで一致。一次資料PDFは未読、景気循環の振れ幅が非常に大きい",
+  "unverified": [
+   "IR PDFは遮断。EPS 911.64円はスニペット由来",
+   "2026/3期EPS: EDINET DBは515円、別スニペットは452.34円（期の対応不明）",
+   "期末PERはEDINET DB由来",
+   "受注・受注残",
+   "2027/3期の金融商品評価益の規模",
+   "次期中計"
+  ],
+  "target_year": 2029
+ }
+]

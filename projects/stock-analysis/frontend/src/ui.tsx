@@ -99,3 +99,15 @@ export function ScoreHistory({ scores }: { scores: ScorePoint[] }) {
     </>
   );
 }
+
+const STATUS: Record<string, [string, string]> = {
+  unconfirmed: ["前提未確認", "", ],
+  provisional: ["暫定評価", "warn"],
+  review_required: ["暫定評価（要再承認）", "bad"],
+  verified: ["検証済み", "good"],
+};
+
+export function StatusBadge({ status }: { status?: string | null }) {
+  const [label, cls] = STATUS[status ?? "unconfirmed"] ?? STATUS.unconfirmed;
+  return <span className={`badge ${cls}`} title="前提未確認: 評価前提が不足 ／ 暫定評価: 推計済みだが検証前 ／ 検証済み: 根拠と計算の確認済み（注文候補の対象）">{label}</span>;
+}

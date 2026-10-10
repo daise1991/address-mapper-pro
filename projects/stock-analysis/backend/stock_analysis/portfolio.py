@@ -38,8 +38,7 @@ def latest_scores(conn: sqlite3.Connection) -> tuple[str | None, dict[str, dict[
     if not r or not r["d"]:
         return None, {}
     sc = rows(conn.execute(
-        """SELECT s.*, sec.name, sec.category,
-                  json_extract(s.buy_detail, '$.assumption_origin') AS assumption_origin
+        """SELECT s.*, sec.name, sec.category
            FROM scores s JOIN securities sec ON sec.code=s.code WHERE s.run_date=?""", (r["d"],)))
     return r["d"], {x["code"]: x for x in sc}
 
@@ -68,6 +67,31 @@ def positions(conn: sqlite3.Connection) -> dict[str, Any]:
     return {"as_of": run_date, "holdings": hs, "cash": cash, "market_value": total_mv, "total_assets": total}
 
 
+def candidate_checks(conn: sqlite3.Connection, s: dict[str, Any], run_date: str | None) -> list[dict[str, Any]]:
+    """点数の条件に加えて、正式な注文候補にするための確認項目（すべて満たしたものだけ注文案に入れる）。"""
+    import json
+    bd = json.loads(s.get("buy_detail") or "{}")
+    sd = json.loads(s.get("sell_detail") or "{}").get("factors", {})
+    status, conf = bd.get("assumption_status"), bd.get("confidence")
+    fin = (sd.get("financial_deterioration") or {}).get("score")
+    dil = (sd.get("dilution") or {}).get("score")
+    since = f"{run_date}T23:59:59+09:00" if run_date else None
+    rev = conn.execute("""SELECT COUNT(*) FROM disclosures WHERE code=? AND category='revision_down'
+                          AND disclosed_at>date(?, '-90 day') AND disclosed_at<=?""",
+                       (s["code"], run_date, since)).fetchone()[0] if run_date else 0
+    status_label = {"unconfirmed": "前提未確認", "provisional": "暫定評価"}.get(status, "暫定評価（要再承認）")
+    checks = [
+        {"label": f"評価前提が検証済みでない（{status_label}）", "ok": status == "verified"},
+        {"label": f"前提の信頼度が低い（{conf}）", "ok": conf in (None, "高", "中")},
+        {"label": f"直近90日に下方修正 {rev}件", "ok": rev == 0},
+        {"label": f"財務悪化の評価が高い（{fin}）", "ok": fin is None or fin < 60},
+        {"label": f"増資・希薄化の評価が高い（{dil}）", "ok": dil is None or dil < 50},
+        {"label": f"当日の株価データに異常（{bd.get('data_issue')}）", "ok": not bd.get("data_issue")},
+        {"label": "終値が理論価値を上回る", "ok": bool(s.get("theoretical_value") and s["price"] <= s["theoretical_value"])},
+    ]
+    return checks
+
+
 def order_plan(conn: sqlite3.Connection, today: date) -> dict[str, Any]:
     policy = {**DEFAULT_POLICY, **(get_setting(conn, "allocation_policy", {}) or {})}
     pos = positions(conn)
@@ -81,14 +105,14 @@ def order_plan(conn: sqlite3.Connection, today: date) -> dict[str, Any]:
     held_mv = {h["code"]: (h["market_value"] or 0.0) for h in pos["holdings"]}
 
     all_cands = [s for s in scores.values() if s["buy_decision"] in ("aggressive", "normal") and s["price"]]
-    # 評価前提が自動推計（会社予想から機械的に作った仮の値）の銘柄は注文案に入れない
-    cands = [s for s in all_cands if s.get("assumption_origin") == "manual"]
-    cands.sort(key=lambda s: (s["buy_decision"] != "aggressive", -(s["buy_score"] or 0), -(s["growth_score"] or 0)))
-    orders, skipped = [], []
+    cands, orders, skipped = [], [], []
     for s in all_cands:
-        if s.get("assumption_origin") != "manual":
-            skipped.append({"code": s["code"], "name": s["name"],
-                            "reason": "評価前提が自動推計（前提未確認）。銘柄詳細で前提を登録すると対象になります"})
+        failed = [c["label"] for c in candidate_checks(conn, s, run_date) if not c["ok"]]
+        if failed:
+            skipped.append({"code": s["code"], "name": s["name"], "reason": " ／ ".join(failed)})
+        else:
+            cands.append(s)
+    cands.sort(key=lambda s: (s["buy_decision"] != "aggressive", -(s["buy_score"] or 0), -(s["growth_score"] or 0)))
     for s in cands:
         cap_w = policy["max_weight_emerging"] if s["category"] == "emerging_loss" else policy["max_weight_per_stock"]
         ratio = policy["aggressive_budget_ratio"] if s["buy_decision"] == "aggressive" else policy["normal_budget_ratio"]

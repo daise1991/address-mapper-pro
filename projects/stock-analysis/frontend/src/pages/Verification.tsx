@@ -2,13 +2,14 @@ import { useState } from "react";
 import { Meta } from "../api";
 import { ErrorBox, fmt, pct, useApi } from "../ui";
 
-type Stat = { n: number; mean_return?: number; mean_excess?: number; hit_rate?: number; worst?: number };
+type Stat = { n: number; mean_return?: number; mean_excess?: number; hit_rate?: number; worst?: number; mean_max_drawdown?: number; worst_max_drawdown?: number };
 type Resp = {
   horizon: number; live_only: boolean; n: number; benchmark_label: string; versions: string[];
   ic: Record<string, number | null>;
   buy_buckets: Record<string, Stat>;
   rules: Record<string, Stat>;
   note: string;
+  disclaimer?: string;
 };
 const HORIZON_LABELS: Record<number, string> = { 5: "1週間後", 20: "1か月後", 60: "3か月後", 120: "6か月後", 250: "1年後" };
 const IC_LABELS: Record<string, string> = { buy: "買い点数", buy_v_over_p: "V/P（係数非依存）", sell: "売り点数", growth: "成長期待点" };
@@ -18,10 +19,10 @@ function StatTable({ title, rows }: { title: string; rows: Record<string, Stat> 
     <div className="panel">
       <h2>{title}</h2>
       <div className="table-wrap"><table>
-        <thead><tr><th className="l">区分</th><th>件数</th><th>平均リターン</th><th>比較対象との差</th><th>的中率</th><th>最悪</th></tr></thead>
+        <thead><tr><th className="l">区分</th><th>件数</th><th>平均リターン</th><th>比較対象との差</th><th>的中率</th><th>最悪</th><th>平均最大下落</th><th>最大下落（最悪）</th></tr></thead>
         <tbody>
           {Object.entries(rows).map(([k, s]) => (
-            <tr key={k}><td className="l">{k}</td><td>{s.n}</td><td>{pct(s.mean_return)}</td><td>{pct(s.mean_excess)}</td><td>{pct(s.hit_rate, 0)}</td><td>{pct(s.worst)}</td></tr>
+            <tr key={k}><td className="l">{k}</td><td>{s.n}</td><td>{pct(s.mean_return)}</td><td>{pct(s.mean_excess)}</td><td>{pct(s.hit_rate, 0)}</td><td>{pct(s.worst)}</td><td>{pct(s.mean_max_drawdown)}</td><td>{pct(s.worst_max_drawdown)}</td></tr>
           ))}
         </tbody>
       </table></div>
@@ -64,6 +65,7 @@ export default function Verification({ meta }: { meta: Meta }) {
       <ErrorBox error={error} />
       <div className="panel">
         <h2>過去の採点と実際の株価</h2>
+        {data?.disclaimer && <div className="banner warn">{data.disclaimer}</div>}
         <div className="row">
           <select value={horizon} onChange={(e) => setHorizon(Number(e.target.value))} aria-label="期間">
             {meta.horizons.map((h) => <option key={h} value={h}>{HORIZON_LABELS[h] ?? `${h}営業日後`}</option>)}

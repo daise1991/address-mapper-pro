@@ -27,6 +27,7 @@ LABELS = {
     "dilution": "増資・財務悪化",
     "target": "狙い目買値に到達",
     "daily": "定時",
+    "review": "前提の再承認",
 }
 
 
@@ -52,8 +53,8 @@ def detect(conn: sqlite3.Connection, d: date) -> list[dict[str, Any]]:
     for code, s in today.items():
         p = prev.get(code, {})
         name = f"{s['name']}({code})"
-        # 買い系の通知は、評価前提を登録した銘柄だけ（自動推計の仮の値では通知しない）
-        confirmed = json.loads(s["buy_detail"] or "{}").get("assumption_origin") == "manual"
+        # 買い系の通知は、評価前提が「検証済み」の銘柄だけ（暫定評価・前提未確認では通知しない）
+        confirmed = json.loads(s["buy_detail"] or "{}").get("assumption_status") == "verified"
         if confirmed and (s["buy_score"] or 0) >= 75 and (p.get("buy_score") or 0) < 75:
             add("buy75", code, d.isoformat(), f"{name} 買い{s['buy_score']}点（前回{p.get('buy_score') if p.get('buy_score') is not None else '—'}）")
         if confirmed and s["buy_decision"] in ("aggressive", "normal") and p.get("buy_decision") not in ("aggressive", "normal"):
@@ -73,6 +74,12 @@ def detect(conn: sqlite3.Connection, d: date) -> list[dict[str, Any]]:
             pfin = (json.loads(p.get("sell_detail") or "{}").get("factors", {}).get("financial_deterioration", {}) or {}).get("score")
             if fin is not None and fin >= 80 and (pfin is None or pfin < 80):
                 add("dilution", code, d.isoformat(), f"{name} 財務悪化の評価が{fin:.0f}点に上昇しました")
+
+    for r in conn.execute(
+            """SELECT r.code, r.review_reasons, r.updated_at, sec.name FROM assumption_research r
+               JOIN securities sec ON sec.code=r.code WHERE r.status='review_required' AND r.updated_at<=?""", (until,)).fetchall():
+        add("review", r["code"], r["updated_at"],
+            f"{r['name']}({r['code']}) 前提の再承認が必要: {'、'.join(json.loads(r['review_reasons'] or '[]'))}")
 
     for r in conn.execute(
             """SELECT d.code, d.category, d.title, d.disclosed_at, sec.name FROM disclosures d

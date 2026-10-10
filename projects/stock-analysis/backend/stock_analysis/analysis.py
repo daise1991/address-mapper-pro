@@ -6,7 +6,7 @@ import sqlite3
 from datetime import date, timedelta
 from typing import Any
 
-from . import assumptions
+from . import assumptions, research
 from .db import get_setting, now_iso, upsert
 from .indicators import compute_all
 from .scoring.features import build_features
@@ -19,7 +19,7 @@ from .universe import active_codes
 
 # 計算方式のバージョン。採点ロジックを変えたら必ず上げる（変更前の結果は scores_archive に残る）。
 # 配点・判定閾値の変更は rules:<ID> 部分が変わることで区別される
-METHOD_VERSION = "2026.10-v2"  # v2: 景気循環株の自動推計を正常化利益（中央値）に変更
+METHOD_VERSION = "2026.10-v3"  # v2: 景気循環株の自動推計を正常化利益に変更 / v3: 調査前提の3シナリオと評価段階を追加
 
 
 def version_label(weights: dict[str, dict[str, float]]) -> str:
@@ -76,7 +76,19 @@ def score_one(conn: sqlite3.Connection, code: str, d: date, rules: RuleSet,
         price = raw_close["close"]
     ind = compute_all([c for _, c in series]) if price else {}
 
-    a, origin = assumptions.resolve(conn, code, d)
+    sa = research.scenario_assumptions(conn, code, d)
+    scen: dict[str, Any] = {}
+    if sa:
+        a, origin = sa["assumptions"]["base"], "research"
+        status, confidence = sa["research"]["status"], sa["research"]["confidence"]
+        for k, sa_k in sa["assumptions"].items():
+            v_k = evaluate(sa_k, price, d)
+            scen[k] = {"eps": sa_k.eps_forecast or sa_k.normalized_eps, "per": sa_k.assumed_per,
+                       "theoretical_value": v_k.theoretical_value, "target_price": v_k.target_price, "buy_score": v_k.buy_score}
+    else:
+        a, origin = assumptions.resolve(conn, code, d)
+        # 利用者が画面で登録した前提は検証済み、自動初期推計・未登録は前提未確認
+        status, confidence = ("verified", None) if (a and origin == "manual") else ("unconfirmed", None)
     val = evaluate(a, price, d)
     target_eps = (a.eps_forecast or a.normalized_eps) if a else None
     years = years_until(a.target_year, d, a.fiscal_month_end) if a else None
@@ -94,7 +106,11 @@ def score_one(conn: sqlite3.Connection, code: str, d: date, rules: RuleSet,
         "price": price, "price_date": d.isoformat() if price else None,
         "growth_score": g["score"], "growth_detail": json.dumps(g, ensure_ascii=False),
         "buy_score": buy, "buy_score_k150": val.buy_score_k150, "buy_status": val.status,
-        "buy_detail": json.dumps({**val.to_dict(), "assumption_origin": origin}, ensure_ascii=False, default=str),
+        "buy_detail": json.dumps({
+            **val.to_dict(), "assumption_origin": origin, "assumption_status": status, "confidence": confidence,
+            "scenarios": scen, "anchor_ratio": sa["anchor_ratio"] if sa else None,
+            "data_issue": research.data_issue_on(conn, code, d),
+        }, ensure_ascii=False, default=str),
         "theoretical_value": val.theoretical_value, "future_price": val.future_price, "target_price": val.target_price,
         "sell_score": s["score"], "sell_detail": json.dumps(s, ensure_ascii=False),
         "buy_decision": bd, "sell_decision": sd, "exit_type": et,

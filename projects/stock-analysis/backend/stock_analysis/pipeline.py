@@ -169,13 +169,13 @@ def do_publish(conn: sqlite3.Connection, d: date) -> str:
         f"""SELECT s.code, sec.name, s.growth_score, s.buy_score, s.sell_score, s.exit_type FROM scores s
             JOIN securities sec ON sec.code=s.code WHERE s.run_date=? AND {where}
             ORDER BY s.buy_score DESC, s.sell_score DESC""", (d.isoformat(),)))
-    buys = q("s.buy_decision IN ('aggressive','normal') AND json_extract(s.buy_detail, '$.assumption_origin')='manual'")
-    unconfirmed = len(q("s.buy_decision IN ('aggressive','normal') AND json_extract(s.buy_detail, '$.assumption_origin')!='manual'"))
+    buys = q("s.buy_decision IN ('aggressive','normal') AND json_extract(s.buy_detail, '$.assumption_status')='verified'")
+    unconfirmed = len(q("s.buy_decision IN ('aggressive','normal') AND COALESCE(json_extract(s.buy_detail, '$.assumption_status'),'')!='verified'"))
     held = {r["code"] for r in conn.execute("SELECT DISTINCT code FROM holdings")}
     sells = [r for r in q("s.sell_decision IN ('priority','candidate','partial')") if r["code"] in held]
     lines = [f"購入候補 {len(buys)}件: " + "、".join(f"{b['name']}(買{b['buy_score']})" for b in buys[:5])]
     if unconfirmed:
-        lines.append(f"前提未確認の候補 {unconfirmed}件（評価前提の登録待ち）")
+        lines.append(f"暫定評価・前提未確認の候補 {unconfirmed}件（注文候補の対象外）")
     if sells:
         lines.append("保有株の売却検討 " + "、".join(
             f"{s['name']}(売{s['sell_score']}・{'利確' if s['exit_type'] == 'profit_taking' else '撤退' if s['exit_type'] == 'stop_loss' else '再評価'})"
@@ -219,8 +219,11 @@ def run_daily(conn: sqlite3.Connection, provider: Provider, d: date | None = Non
                     notify(conn, "delay", f"{d.isoformat()} データ遅延",
                            "確定終値がそろわないため本日の分析を確定していません。取得後に再実行します。")
             elif stage == "score":
+                from . import research
+                from .analysis import METHOD_VERSION
+                flagged = research.monitor(conn, d, METHOD_VERSION)
                 n = len(run_scoring(conn, d))
-                st, msg = "done", f"{n}銘柄を採点"
+                st, msg = "done", f"{n}銘柄を採点" + (f" / 要再承認 {len(flagged)}件" if flagged else "")
             elif stage == "verify":
                 n = compute_forward_returns(conn)
                 s60 = summary(conn, 60)

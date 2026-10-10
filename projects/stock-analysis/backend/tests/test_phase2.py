@@ -122,7 +122,7 @@ def test_alerts_and_dedupe(conn):
     conn.execute("UPDATE scores SET buy_score=80, price=100, target_price=120 WHERE code=? AND run_date=?", (code, D.isoformat()))
     # 自動推計の前提では買い系の通知を出さない
     assert not {a["kind"] for a in alerts.detect(conn, D) if a["code"] == code} & {"buy75", "target"}
-    conn.execute("""UPDATE scores SET buy_detail=json_set(buy_detail, '$.assumption_origin', 'manual')
+    conn.execute("""UPDATE scores SET buy_detail=json_set(buy_detail, '$.assumption_status', 'verified')
                     WHERE code=? AND run_date=?""", (code, D.isoformat()))
     conn.execute("INSERT INTO disclosures (code, disclosed_at, title, category, source, fetched_at) VALUES (?,?,?,?,?,?)",
                  (code, f"{D.isoformat()}T15:30:00+09:00", "業績予想の下方修正", "revision_down", "test", "x"))
@@ -136,8 +136,8 @@ def test_alerts_and_dedupe(conn):
 
 def test_order_plan_monthly_budget_and_upper_limit(conn):
     run_daily(conn, DemoProvider(), D, datetime.combine(D, time(18, 5), JST))
-    conn.execute("UPDATE scores SET buy_decision='aggressive', price=1000 WHERE code IN ('6857','8035')")
-    conn.execute("UPDATE scores SET buy_detail=json_set(buy_detail, '$.assumption_origin', 'manual') WHERE code='6857'")
+    conn.execute("UPDATE scores SET buy_decision='aggressive', price=1000, theoretical_value=1500, sell_detail='{}' WHERE code IN ('6857','8035')")
+    conn.execute("UPDATE scores SET buy_detail=json_set(buy_detail, '$.assumption_status', 'verified') WHERE code='6857'")
     conn.execute("INSERT INTO cash_balance (as_of, amount) VALUES ('2026-10-09', 10000000)")
     conn.execute("INSERT INTO holdings (code, quantity, avg_cost, account, acquired_at, updated_at) VALUES ('8035', 10, 1000, 'specific', '2026-10-01', 'x')")
     conn.commit()
@@ -148,7 +148,7 @@ def test_order_plan_monthly_budget_and_upper_limit(conn):
     assert sum(x["estimated_amount"] for x in plan["buy_orders"]) <= 20000
     assert "指値注文ができません" in plan["s_kabu_note"]
     assert [o["code"] for o in plan["buy_orders"]] == ["6857"]  # 8035 は前提未確認のため除外
-    assert any(x["code"] == "8035" and "前提未確認" in x["reason"] for x in plan["skipped"])
+    assert any(x["code"] == "8035" and "検証済みでない" in x["reason"] for x in plan["skipped"])
 
 
 def test_method_version_archive_and_benchmark(conn):
@@ -175,3 +175,15 @@ def test_cyclical_auto_baseline_uses_median_profit_not_peak(conn):
     assert a.method == "normalized"
     # 純利益 100,120,110,400 と予想 300 の中央値 120億 ÷ 1億株 = 120円（ピークの400円ではない）
     assert a.normalized_eps == pytest.approx(120.0)
+
+
+def test_max_drawdown_recorded(conn):
+    run_daily(conn, DemoProvider(), date(2026, 9, 1), datetime.combine(date(2026, 9, 1), time(18, 5), JST))
+    for c in ("6857", "8035", "2644"):
+        ingest_quotes(conn, DemoProvider(), c, date(2026, 9, 1), D)  # 評価日以降の株価
+    from stock_analysis.verification import compute_forward_returns
+    compute_forward_returns(conn)
+    r = conn.execute("SELECT max_drawdown, forward_return FROM verifications WHERE horizon=20 LIMIT 1").fetchone()
+    assert r is not None and r["max_drawdown"] <= 0 and r["max_drawdown"] <= min(0, r["forward_return"]) + 1e-9
+    s = summary(conn, 20, benchmark="TOPIX")
+    assert "mean_max_drawdown" in next(iter(s["buy_buckets"].values())) and "保証" in s["disclaimer"]

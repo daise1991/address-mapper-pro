@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Meta, ScoreRow } from "../api";
-import { Decision, ErrorBox, fmt, Score, useApi } from "../ui";
+import { Decision, ErrorBox, fmt, Score, StatusBadge, useApi } from "../ui";
 
 type Resp = { run_date: string | null; dates: string[]; items: ScoreRow[] };
 type SortKey = "growth_score" | "buy_score" | "sell_score" | "code" | "upside";
@@ -94,7 +94,7 @@ export default function Rankings({ meta, onOpen }: { meta: Meta; onOpen: (c: str
                 <td><Score v={r.growth_score} kind="growth" /></td>
                 <td title={`k=150: ${r.buy_score_k150 ?? "—"} / ${r.buy_detail?.reason ?? ""}`}>
                   <Score v={r.buy_score} kind="buy" />
-                  {r.buy_detail?.assumption_origin === "auto" && r.buy_score !== null && <span className="muted"> 自</span>}
+
                 </td>
                 <td><Score v={r.sell_score} kind="sell" /></td>
                 <td>{fmt(r.theoretical_value)}</td>
@@ -105,9 +105,7 @@ export default function Rankings({ meta, onOpen }: { meta: Meta; onOpen: (c: str
                 <td>{r.theoretical_value && r.price ? `${(((r.theoretical_value / r.price) - 1) * 100).toFixed(0)}%` : "—"}</td>
                 <td className="l">
                   <Decision type="buy" value={r.buy_decision} labels={meta.buy_labels} />
-                  {r.buy_detail?.assumption_origin === "auto" && ["aggressive", "normal", "check"].includes(r.buy_decision) && (
-                    <span className="badge warn" title="会社予想から機械的に作った仮の前提です。銘柄詳細で前提を登録すると注文案・通知の対象になります"> 前提未確認</span>
-                  )}
+                  {" "}<StatusBadge status={r.buy_detail?.assumption_status} />
                 </td>
                 <td className="l">
                   <Decision type="sell" value={r.sell_decision} labels={meta.sell_labels} />{" "}
@@ -118,7 +116,7 @@ export default function Rankings({ meta, onOpen }: { meta: Meta; onOpen: (c: str
           </tbody>
         </table>
       </div>
-      <p className="muted">「前提未確認」の銘柄は、評価前提（予想EPS・想定PER）が自動推計のため、注文案と購入通知の対象外です。成長期待点・売り点数の配点は「通知・システム → 配点設定」で確認・変更できます。「自」= 評価前提が自動初期推計（会社予想ベース）。銘柄詳細で根拠付きの前提に置き換えてください。買い点数にカーソルを合わせると係数150の比較値を表示します。</p>
+      <p className="muted">評価の段階: <b>前提未確認</b>（評価前提が不足。自動初期推計の値を参考表示）／<b>暫定評価</b>（推計済み・検証前）／<b>検証済み</b>（根拠と計算を確認済み）。注文案と購入通知の対象は検証済みのみです。点数は検証で有効性が確認されるまで、投資成果を保証する指標ではありません。成長期待点・売り点数の配点は「通知・システム → 配点設定」で確認・変更できます。買い点数にカーソルを合わせると係数150の比較値を表示します。</p>
     </div>
   );
 }

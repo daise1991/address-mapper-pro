@@ -1,12 +1,100 @@
 import { useEffect, useState } from "react";
 import { Meta, ScoreRow, send } from "../api";
-import { Bar, Decision, ErrorBox, fmt, pct, PriceChart, Score, ScoreHistory, useApi } from "../ui";
+import { Bar, Decision, ErrorBox, fmt, pct, PriceChart, Score, ScoreHistory, StatusBadge, useApi } from "../ui";
 
 type Assumption = {
   method: string; target_year: number; fiscal_month_end: number; required_return: number; safety_margin: number; reason: string;
   eps_forecast: number | null; assumed_per: number | null; fcf_forecast: number | null; terminal_growth: number | null;
   net_cash_per_share: number | null; normalized_eps: number | null; bps_forecast: number | null; target_pbr: number | null;
 };
+type Research = {
+  status: string; status_label: string; confidence: string | null; confidence_reason: string | null;
+  category: string | null; category_reason: string | null; valuation_method: string; target_year: number;
+  scenarios: Record<string, { eps: number; per: number; rationale: string }>;
+  required_return: number; safety_margin: number; rr_reason: string | null; anchor_type: string; anchor_eps: number | null;
+  detail: {
+    latest_company_forecast?: { fiscal_period: string; eps: number | null; disclosed_date: string; revised?: string; source_url?: string };
+    history?: { fiscal_period: string; eps: number | null; op_margin: number | null; net_income: number | null; per_at_fy_end: number | null }[];
+    split_notes?: string; midterm_plan?: { name: string; target_period: string; targets: string; url: string; published: string } | null;
+    orders_and_drivers?: string; normalized_eps?: { value: number | null; method: string };
+  } | null;
+  sources: { title: string; url: string; published: string }[] | null;
+  unverified: string[] | null; review_reasons: string[] | null;
+  approved_at: string | null; approved_note: string | null; updated_at: string;
+};
+const SCEN_LABEL: Record<string, string> = { bear: "弱気", base: "標準", bull: "強気" };
+
+function ResearchPanel({ code, r, live, onChanged }: {
+  code: string; r: Research; live?: Record<string, { theoretical_value: number | null; target_price: number | null; buy_score: number | null; eps: number }>;
+  onChanged: () => void;
+}) {
+  const [note, setNote] = useState("");
+  const [msg, setMsg] = useState("");
+  const d = r.detail ?? {};
+  const approve = async () => {
+    try {
+      await send("/research/approve", "POST", { codes: [code], note });
+      setMsg("検証済みにしました");
+      onChanged();
+    } catch (e) {
+      setMsg(`失敗: ${(e as Error).message}`);
+    }
+  };
+  return (
+    <div className="panel">
+      <h2>評価前提（調査） <StatusBadge status={r.status} /> <span className="badge">信頼度 {r.confidence ?? "—"}</span></h2>
+      {r.review_reasons && r.review_reasons.length > 0 && <div className="banner bad">再承認が必要: {r.review_reasons.join(" ／ ")}</div>}
+      <p className="muted">2029年のEPS・PERは<b>推計値</b>であり事実ではありません。目標期: 決算期末が{r.target_year}年の期 ／ 評価方式: {r.valuation_method === "normalized" ? "正常化利益" : "PER"} ／ 必要利回り {pct(r.required_return)}・安全余裕 {pct(r.safety_margin, 0)}（{r.rr_reason}）</p>
+      <div className="table-wrap"><table>
+        <thead><tr><th className="l">シナリオ</th><th>2029年EPS（推計）</th><th>想定PER</th><th>当日の2029年EPS</th><th>現在理論価値</th><th>狙い目買値</th><th>買い点数</th><th className="l">根拠</th></tr></thead>
+        <tbody>
+          {["bear", "base", "bull"].map((k) => (
+            <tr key={k}>
+              <td className="l"><b>{SCEN_LABEL[k]}</b></td>
+              <td>{fmt(r.scenarios[k]?.eps, 1)}</td><td>{fmt(r.scenarios[k]?.per, 1)}</td>
+              <td>{fmt(live?.[k]?.eps ?? null, 1)}</td>
+              <td>{fmt(live?.[k]?.theoretical_value ?? null)}</td><td>{fmt(live?.[k]?.target_price ?? null)}</td>
+              <td>{live?.[k]?.buy_score ?? "—"}</td>
+              <td className="l wrap" style={{ textAlign: "left", minWidth: 260 }}>{r.scenarios[k]?.rationale}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table></div>
+      <p className="muted">「当日の2029年EPS」は承認済みルールで自動更新した値です（基準EPS＝{r.anchor_type === "normalized" ? "正常化EPS" : "会社予想EPS"} {fmt(r.anchor_eps, 1)}円の変化率の半分を反映。±15%以上の変化で再承認を求めます）。</p>
+      <div className="grid">
+        <div>
+          <h2>会社予想・過去推移</h2>
+          {d.latest_company_forecast && <p>最新会社予想 {d.latest_company_forecast.fiscal_period}: EPS {fmt(d.latest_company_forecast.eps ?? null, 1)}円（{d.latest_company_forecast.disclosed_date}）<br /><span className="muted">{d.latest_company_forecast.revised}</span></p>}
+          <table><thead><tr><th className="l">期</th><th>EPS</th><th>営業利益率</th><th>期末PER</th></tr></thead><tbody>
+            {(d.history ?? []).map((h) => <tr key={h.fiscal_period}><td className="l">{h.fiscal_period}</td><td>{fmt(h.eps, 1)}</td><td>{pct(h.op_margin)}</td><td>{fmt(h.per_at_fy_end, 1)}</td></tr>)}
+          </tbody></table>
+          <p className="muted">{d.split_notes}</p>
+          {d.normalized_eps && <p>正常化EPS {fmt(d.normalized_eps.value, 1)}円 <span className="muted">（{d.normalized_eps.method}）</span></p>}
+        </div>
+        <div>
+          <h2>中期経営計画・受注</h2>
+          {d.midterm_plan && <p><b>{d.midterm_plan.name}</b>（{d.midterm_plan.target_period}）: {d.midterm_plan.targets} <a href={d.midterm_plan.url} target="_blank" rel="noreferrer">資料</a></p>}
+          <p>{d.orders_and_drivers}</p>
+          <p className="muted">分類: {r.category}（{r.category_reason}）</p>
+        </div>
+      </div>
+      <h2>使用した資料</h2>
+      <ul>{(r.sources ?? []).map((x, i) => <li key={i}><a href={x.url} target="_blank" rel="noreferrer">{x.title}</a> <span className="muted">{x.published}</span></li>)}</ul>
+      <h2>未確認事項</h2>
+      <ul>{(r.unverified ?? []).map((x, i) => <li key={i} className="muted">{x}</li>)}</ul>
+      <p className="muted">信頼度の理由: {r.confidence_reason}</p>
+      {r.status !== "verified" ? (
+        <div className="row">
+          <input style={{ flex: 1, minWidth: 200 }} placeholder="確認内容（必須）例: 会社予想と中計を確認、PERは妥当" value={note} onChange={(e) => setNote(e.target.value)} />
+          <button className="primary" onClick={approve}>この前提を検証済みにする</button><span>{msg}</span>
+        </div>
+      ) : (
+        <p className="muted">検証済み: {r.approved_at?.slice(0, 16)}「{r.approved_note}」</p>
+      )}
+    </div>
+  );
+}
+
 type DetailResp = {
   security: { code: string; name: string; category: string; asset_type: string; listing_status: string; verified_at: string | null; note: string | null };
   scores: ScoreRow[];
@@ -18,6 +106,7 @@ type DetailResp = {
   assumption_history: (Assumption & { updated_at: string; origin: string })[];
   qualitative: { factor: string; score: number; reason: string; updated_at: string }[];
   quality_issues: { date: string; field: string; issue: string; detail: string }[];
+  research: Research | null;
 };
 
 const NUM_FIELDS: [keyof Assumption, string][] = [
@@ -109,6 +198,8 @@ export default function Detail({ code, meta, onBack }: { code: string; meta: Met
         <p className="muted">青: 調整後終値 / 橙: 25日線 / 緑: 75日線。株価出所: {data.quotes.at(-1)?.source ?? "—"}（取得 {data.quotes.at(-1)?.fetched_at ?? "—"}）</p>
       </div>
 
+      {data.research && <ResearchPanel code={code} r={data.research} live={s?.buy_detail.scenarios} onChanged={reload} />}
+
       <div className="panel">
         <h2>過去の点数推移</h2>
         <ScoreHistory scores={data.scores} />
@@ -124,7 +215,8 @@ export default function Detail({ code, meta, onBack }: { code: string; meta: Met
             <h2>B. 買い点数（将来価値方式）</h2>
             <table><tbody>
               <tr><td className="l">手法</td><td className="wrap">{s.buy_detail.method}（{s.buy_detail.reason}）</td></tr>
-              <tr><td className="l">前提の出所</td><td>{s.buy_detail.assumption_origin === "manual" ? "手動登録" : "自動初期推計"}</td></tr>
+              <tr><td className="l">評価の段階</td><td><StatusBadge status={s.buy_detail.assumption_status} /></td></tr>
+              <tr><td className="l">前提の出所</td><td>{{ manual: "手動登録", research: "調査前提（標準シナリオ）", auto: "自動初期推計（参考）" }[s.buy_detail.assumption_origin] ?? s.buy_detail.assumption_origin}</td></tr>
               <tr><td className="l">将来株価</td><td>{fmt(s.future_price)}</td></tr>
               <tr><td className="l">割引年数</td><td>{fmt(s.buy_detail.years, 2)}</td></tr>
               <tr><td className="l">現在理論価値 V</td><td>{fmt(s.theoretical_value)}</td></tr>
