@@ -2,12 +2,14 @@
 
 正式評価の条件（すべて満たすときだけ正式ランキング・注文候補に使う）:
   成長期待点と売り点数がともに正式（充足率80%以上・必須項目あり）／ 買い点数が調査前提で算定済み ／
-  予測信頼度 A または B ／ 評価前提が検証済み（承認済み）
+  予測信頼度 A または B ／ 評価前提が検証済み（承認済み）／ 想定PER（過去5年中央値）に異常の目印が無い
+定性評価（市場拡大・競争優位）は一次情報での裏付けが済むまで参考点数にだけ使い、正式点数の計算では未評価とする。
 """
 from __future__ import annotations
 
 import json
 import sqlite3
+from dataclasses import replace
 from datetime import date, timedelta
 from typing import Any
 
@@ -17,7 +19,7 @@ from ..db import now_iso, upsert
 from ..indicators import compute_all
 from ..scoring import rules as v4rules
 from ..scoring.valuation import years_until
-from . import confidence, growth, qualitative, risk, sell, valuation
+from . import confidence, growth, per_history, qualitative, risk, sell, valuation
 from .features import build, company_forecast_errors
 
 VERSION = "2026.10-v5"
@@ -89,10 +91,18 @@ def score_one(conn: sqlite3.Connection, code: str, d: date) -> dict[str, Any]:
     r = sa["research"] if sa else None
     qual = qualitative.scores_for(conn, code)
 
+    # 想定PER（方針B）: 過去5年の実績PERの中央値（弱気=25%点、強気=75%点）。調査PERでの値は比較用に残す
+    research_per = sa["assumptions"]["base"].assumed_per if sa else None
+    pb = per_history.per_basis(conn, code, d, f.values, research_per)
     vals: dict[str, Any] = {}
+    vals_research_per: dict[str, Any] = {}
     if sa:
         for k, a in sa["assumptions"].items():
-            vals[k] = valuation.value(f, a, price, d)
+            vals_research_per[k] = valuation.value(f, a, price, d)
+            if pb["applied"]:
+                sa["assumptions"][k] = replace(a, assumed_per=pb[per_history.SCENARIO_KEY[k]],
+                                               reason=a.reason + f" ／ v5: 想定PERを過去5年{per_history.SCENARIO_KEY[k]} {pb[per_history.SCENARIO_KEY[k]]}倍に置換")
+            vals[k] = valuation.value(f, sa["assumptions"][k], price, d)
         base_a = sa["assumptions"]["base"]
         base = vals["base"]
         buy_status = "rated" if base["buy_score"] is not None else "unrated"
@@ -101,6 +111,8 @@ def score_one(conn: sqlite3.Connection, code: str, d: date) -> dict[str, Any]:
             buy_status = "unrated"
     else:
         a, _ = auto_assumptions.resolve(conn, code, d)
+        if a is not None and a.assumed_per and pb["applied"]:
+            a = replace(a, assumed_per=pb["median"])
         base = valuation.value(f, a, price, d)
         base_a = a
         buy_status = "reference" if base["buy_score"] is not None else "unrated"  # 自動推計は参考値のみ
@@ -108,6 +120,12 @@ def score_one(conn: sqlite3.Connection, code: str, d: date) -> dict[str, Any]:
     years = years_until(base_a.target_year, d, base_a.fiscal_month_end) if base_a else None
 
     g = growth.score(f, qual, eps_2029, years)
+    if not qual.get("primary_verified"):
+        # 一次情報で裏付けていない定性評価は正式点数に使わない（参考点数には含める）
+        strict = growth.score(f, {**qual, "market_expansion": None, "competitive_advantage": None}, eps_2029, years)
+        g["formal_if_qualitative_verified"] = g["formal"]
+        g.update({"formal": strict["formal"], "status": strict["status"], "coverage_formal_basis": strict["coverage"],
+                  "qualitative_note": "定性評価は一次情報の裏付け前のため、正式点数では未評価として計算"})
     s = sell.score(f, base.get("v_over_p"), _growth_drop(conn, code, d, g["reference"]), qual.get("growth_outlook"))
     risks = risk.detect(f)
     diff, hist_match = _cross_check(conn, r, f)
@@ -120,7 +138,8 @@ def score_one(conn: sqlite3.Connection, code: str, d: date) -> dict[str, Any]:
         forecast_errors=company_forecast_errors(conn, code, d))
 
     formal = (g["status"] == "formal" and s["status"] == "formal" and buy_status == "rated"
-              and conf["grade"] in ("A", "B") and r is not None and r.get("status") == "verified")
+              and conf["grade"] in ("A", "B") and r is not None and r.get("status") == "verified"
+              and pb["applied"] and not pb["anomalies"])
     eval_status = "formal" if formal else ("provisional" if g["reference"] is not None else "unrated")
 
     rs = v4rules.RuleSet()
@@ -149,7 +168,10 @@ def score_one(conn: sqlite3.Connection, code: str, d: date) -> dict[str, Any]:
         "bear_downside": round(bear_v / price - 1, 4) if (bear_v and price) else None,
         "buy_detail": json.dumps({"base": base, "scenarios": vals, "reference_buy_score": base.get("buy_score"),
                                   "assumption_status": r.get("status") if r else "unconfirmed",
-                                  "anchor_ratio": sa["anchor_ratio"] if sa else None}, ensure_ascii=False, default=str),
+                                  "anchor_ratio": sa["anchor_ratio"] if sa else None,
+                                  "per_basis": pb,
+                                  "research_per": {"base_per": research_per,
+                                                   "buy_score": (vals_research_per.get("base") or {}).get("buy_score")}}, ensure_ascii=False, default=str),
         "sell_formal": s["formal"], "sell_reference": s["reference"], "sell_coverage": s["coverage"],
         "sell_detail": json.dumps(s, ensure_ascii=False),
         "severe_risks": json.dumps(risks, ensure_ascii=False),

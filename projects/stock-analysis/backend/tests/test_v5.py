@@ -8,7 +8,16 @@ from stock_analysis import research
 from stock_analysis.db import connect, upsert
 from stock_analysis.scoring.valuation import Assumption
 from stock_analysis.universe import seed_universe
-from stock_analysis.v5 import confidence, engine, growth, qualitative, risk, sell, valuation
+from stock_analysis.v5 import (
+    confidence,
+    engine,
+    growth,
+    per_history,
+    qualitative,
+    risk,
+    sell,
+    valuation,
+)
 from stock_analysis.v5.common import Item, summarize
 from stock_analysis.v5.features import build
 
@@ -61,9 +70,9 @@ def conn(tmp_path):
     return c
 
 
-def full_setup(conn, approve=True):
+def full_setup(conn, approve=True, verified=True):
     research.import_research(conn, [research_item()], D, "test")
-    qualitative.import_items(conn, [QUAL], "test")
+    qualitative.import_items(conn, [{**QUAL, "primary_verified": verified}], "test")
     if approve:
         research.approve(conn, [CODE], "ok", engine.VERSION)
 
@@ -72,7 +81,7 @@ def test_same_input_same_score(conn):
     full_setup(conn)
     a = engine.score_one(conn, CODE, D)
     b = engine.score_one(conn, CODE, D)
-    strip = lambda r: {k: v for k, v in r.items() if k != "created_at"}  # noqa: E731
+    strip = lambda r: {k: v for k, v in r.items() if k != "created_at"}
     assert strip(a) == strip(b)
 
 
@@ -97,12 +106,14 @@ def test_reference_scores_never_drive_formal_decisions(conn):
 
 
 def test_formal_requires_coverage_confidence_and_approval(conn):
+    quotes(conn, days=1900)  # 想定PER（過去5年中央値）を算定できる期間
     full_setup(conn, approve=False)
     assert engine.score_one(conn, CODE, D)["eval_status"] == "provisional"
     research.approve(conn, [CODE], "ok", engine.VERSION)
     r = engine.score_one(conn, CODE, D)
     conf = json.loads(r["confidence_detail"])
     assert r["growth_formal"] is not None and r["sell_formal"] is not None
+    assert not json.loads(r["buy_detail"])["per_basis"]["anomalies"]
     assert (r["eval_status"] == "formal") == (r["confidence"] in ("A", "B"))
     assert conf["insufficient_history"] in (True, False)
 
@@ -234,3 +245,53 @@ def test_growth_uses_multi_year_history(conn):
     assert f.get("history_years") == 6 and f.get("op_margin_avg") is not None
     g = growth.score(f, {}, None, None)
     assert g["items"]["revenue_growth"]["components"][0]["score"] is not None
+
+
+def test_unverified_qualitative_is_reference_only(conn):
+    quotes(conn, days=1900)
+    full_setup(conn, verified=False)
+    r = engine.score_one(conn, CODE, D)
+    g = json.loads(r["growth_detail"])
+    # 一次情報の裏付け前: 参考点数には含めるが、正式点数では未評価（充足率不足で正式にならない）
+    assert g["items"]["market_expansion"]["score"] is not None
+    assert r["growth_formal"] is None and r["eval_status"] != "formal" and r["buy_decision"] is None
+    assert g["formal_if_qualitative_verified"] is not None
+
+
+def test_per_policy_uses_five_year_median(conn):
+    quotes(conn, days=1900)
+    full_setup(conn)
+    r = engine.score_one(conn, CODE, D)
+    det = json.loads(r["buy_detail"])
+    pb = det["per_basis"]
+    assert pb["applied"] and pb["valid_months"] >= per_history.MIN_MONTHS
+    assert pb["p25"] <= pb["median"] <= pb["p75"]
+    # 株価1500円・EPS 100〜176円 → PER は 8.5〜15倍の範囲
+    assert 8 <= pb["median"] <= 15.1
+    assert "per_basis" in det and det["research_per"]["base_per"] == 15
+    # 調査PER（15倍）での買い点数は比較用に別保存。中央値（15倍未満）を使う v5 の方が理論価値は低い
+    assert det["research_per"]["buy_score"] is not None
+    assert det["scenarios"]["base"]["future_price"] < det["scenarios"]["bull"]["future_price"]
+    assert r["buy_score"] <= det["research_per"]["buy_score"]
+
+
+def test_per_insufficient_history_blocks_formal(conn):
+    full_setup(conn)  # 株価は1年分のみ
+    r = engine.score_one(conn, CODE, D)
+    pb = json.loads(r["buy_detail"])["per_basis"]
+    assert not pb["applied"] and "PERデータ不足" in pb["anomalies"][0]
+    assert r["eval_status"] != "formal"
+
+
+def test_per_anomalies_flag_structural_change(conn):
+    quotes(conn, days=1900)
+    pb = per_history.per_basis(conn, CODE, D, {"op_margin_first": 0.04, "op_margin_latest": 0.15,
+                                               "revenue_cagr_hist": 0.30}, research_base_per=40.0)
+    text = "／".join(pb["anomalies"])
+    assert "利益構造の変化" in text and "事業規模の急変" in text and "調査の標準PER" in text
+
+
+def test_v5_not_run_in_daily_pipeline_by_default(monkeypatch):
+    from stock_analysis.config import Settings
+    monkeypatch.delenv("STOCK_V5_SHADOW", raising=False)
+    assert Settings().v5_shadow is False

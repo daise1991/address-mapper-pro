@@ -44,6 +44,8 @@ class Settings:
     vapid_subject: str = field(default_factory=lambda: os.environ.get("VAPID_SUBJECT", "mailto:admin@example.com"))
     # 終値が揃うのを待つ最終時刻（JST, HH:MM）。これを過ぎたら「遅延」として通知し、分析は確定させない。
     data_deadline: str = field(default_factory=lambda: os.environ.get("STOCK_DATA_DEADLINE", "20:00"))
+    # v5（比較検証用）を毎日の処理でも参考採点するか。既定は実行しない（本番処理から切り離す）
+    v5_shadow: bool = field(default_factory=lambda: os.environ.get("STOCK_V5_SHADOW", "0") == "1")
     retry_interval_min: int = field(default_factory=lambda: int(os.environ.get("STOCK_RETRY_INTERVAL_MIN", "15")))
 
 

@@ -223,9 +223,10 @@ def run_daily(conn: sqlite3.Connection, provider: Provider, d: date | None = Non
                 from .analysis import METHOD_VERSION
                 flagged = research.monitor(conn, d, METHOD_VERSION)
                 n = len(run_scoring(conn, d))
-                try:  # v5 は比較検証用の参考採点（失敗しても正式な v4 採点は止めない）
-                    from .v5 import engine as v5engine
-                    v5engine.run(conn, d)
+                try:  # v5 は比較検証用。既定では実行しない（STOCK_V5_SHADOW=1 のときだけ。通知・候補には使わない）
+                    if get_settings().v5_shadow:
+                        from .v5 import engine as v5engine
+                        v5engine.run(conn, d)
                 except Exception as e:  # noqa: BLE001
                     conn.execute("INSERT INTO fetch_log (run_id, source, target, status, message, fetched_at) VALUES (?,?,?,?,?,?)",
                                  (f"{d}:score", "v5", "scoring", "error", str(e)[:500], now_iso()))

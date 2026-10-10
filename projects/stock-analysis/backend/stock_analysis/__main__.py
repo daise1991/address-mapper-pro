@@ -224,8 +224,10 @@ def main() -> None:
         from .v5 import compare as v5compare
         from .v5 import engine as v5engine
         conn = connect()
-        d0 = date.fromisoformat(args.date) if args.date else date.fromisoformat(
-            conn.execute("SELECT MAX(run_date) FROM scores").fetchone()[0])
+        last = conn.execute("SELECT MAX(run_date) FROM scores").fetchone()[0]
+        if not args.date and not last:
+            raise SystemExit("v4 の採点履歴がありません。先に run-daily を実行してください")
+        d0 = date.fromisoformat(args.date or last)
         rows = v5engine.run(conn, d0)
         if args.cmd == "v5-run":
             print(f"{d0} の {len(rows)}銘柄を v5 で参考採点しました（正式な採点方式は v4 のまま）")

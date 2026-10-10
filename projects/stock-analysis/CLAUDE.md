@@ -27,9 +27,16 @@
 - 結果は、専門用語を避けて短く報告する。
 
 ## 現在の作業（2026-10-10 時点・v5 比較検証）
-v5 は比較検証用の参考採点です。正式な採点方式（v4）の切り替えは、利用者の承認後に行います。
-1. 最新版を取得する（README の手順）。そのあと `npm run build` で画面を作り直す。
-2. `.venv\Scripts\python -m stock_analysis import-qualitative ..\assumptions\qualitative_batch1_2026-10.json` を実行する（市場拡大・競争優位の取込）。
-3. `.venv\Scripts\python -m stock_analysis compare-v5` を実行し、出力（data\compare_v4_v5_日付.md）を利用者に報告する。
-4. `.venv\Scripts\python -m stock_analysis explain 7012` で、株式分割の誤判定がないか（増資・希薄化≒0）を確認する。
+v5 は比較検証用の参考採点です。**正式な採点方式は v4 のまま**です。v5 の本番採用・切替は、60銘柄の比較結果を利用者が確認し、承認するまで行わないでください。
+- v5 は自動通知・売買候補・注文計画・毎日の自動処理に使われません（毎日の参考採点は `STOCK_V5_SHADOW=1` のときだけ。既定は実行しない。設定を変えないこと）。
+- v5 の想定PERは「J-Quants の過去5年PER中央値」（利用者承認済みの方針B）。異常の目印が付いた銘柄は正式評価にしない。
+- 定性評価（市場拡大・競争優位）10銘柄は一次情報（決算資料・中期経営計画・有価証券報告書）の裏付け前のため、正式点数には使わない（参考点数のみ）。
+
+手順（backend で実行）:
+1. `git pull` → `..\scripts\stop.bat` → `cd ..\frontend && npm run build` → `cd ..\backend` → `..\scripts\start.bat`
+2. `.venv\Scripts\python -m stock_analysis import-qualitative ..\assumptions\qualitative_batch1_2026-10.json`
+3. `.venv\Scripts\python -m stock_analysis compare-v5` → 出力 `data\compare_v4_v5_日付.md` を利用者に報告する。報告内容:
+   60銘柄ごとの成長期待点・買い点数・売り点数の v4→v5、信頼度A〜D、充足率、重大リスク、正式評価の銘柄数、
+   購入候補・売却候補の追加／除外、「異常な点数変動・欠損データ・想定外の判定」の一覧、PERの異常の目印が付いた銘柄。
+4. `.venv\Scripts\python -m stock_analysis explain 7012` で川崎重工の株式分割が希薄化と誤判定されていないか確認する（比較表の希薄化 v5 が 0 であること）。
 5. `.venv\Scripts\python -m pytest -q` の結果を報告する。

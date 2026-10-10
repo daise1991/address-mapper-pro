@@ -81,6 +81,7 @@ def build(conn: sqlite3.Connection, code: str, as_of: date, price: float | None,
     margins = [r["operating_profit"] / r["revenue"] for r in hist if r["revenue"] and r["operating_profit"] is not None]
     v["op_margin_avg"] = sum(margins) / len(margins) if len(margins) >= 3 else None
     v["op_margin_latest"] = margins[-1] if margins else None
+    v["op_margin_first"] = margins[0] if len(margins) >= 3 else None  # 利益構造の変化の確認用
     roes = [r["net_income"] / r["equity"] for r in hist if r["equity"] and r["equity"] > 0 and r["net_income"] is not None]
     v["roe_avg"] = sum(roes) / len(roes) if len(roes) >= 3 else None
     cfs = [r["operating_cf"] for r in hist if r["operating_cf"] is not None]

@@ -74,7 +74,9 @@ def import_items(conn: sqlite3.Connection, items: list[dict[str, Any]], source: 
         ev = evaluate(it)
         payload = {"raw": it, "scores": {"market_expansion": ev["market_expansion"],
                                          "competitive_advantage": ev["competitive_advantage"]},
-                   "issues": ev["issues"], "imported_at": now_iso(), "source": source}
+                   "issues": ev["issues"], "imported_at": now_iso(), "source": source,
+                   # 一次情報（決算資料・中計・有報）の裏付けが確認された場合だけ true（取込ファイルで明示）
+                   "primary_verified": bool(it.get("primary_verified"))}
         cur = conn.execute("UPDATE assumption_research SET qualitative=?, updated_at=? WHERE code=?",
                            (json.dumps(payload, ensure_ascii=False), now_iso(), it["code"]))
         if not cur.rowcount:
@@ -86,12 +88,16 @@ def import_items(conn: sqlite3.Connection, items: list[dict[str, Any]], source: 
     return results
 
 
-def scores_for(conn: sqlite3.Connection, code: str) -> dict[str, float | None]:
-    """承認済みの定性評価（調査）→ 無ければ手入力（qualitative_inputs）。"""
-    out: dict[str, float | None] = {"market_expansion": None, "competitive_advantage": None, "growth_outlook": None}
+def scores_for(conn: sqlite3.Connection, code: str) -> dict[str, Any]:
+    """定性評価（調査）→ 無ければ手入力（qualitative_inputs）。
+    primary_verified: 決算資料・中期経営計画・有価証券報告書などの一次情報で裏付け済みか（未済なら正式点数に使わない）。"""
+    out: dict[str, Any] = {"market_expansion": None, "competitive_advantage": None, "growth_outlook": None,
+                           "primary_verified": False}
     r = conn.execute("SELECT qualitative FROM assumption_research WHERE code=?", (code,)).fetchone()
     if r and r["qualitative"]:
-        out.update(json.loads(r["qualitative"])["scores"])
+        q = json.loads(r["qualitative"])
+        out.update(q["scores"])
+        out["primary_verified"] = bool(q.get("primary_verified"))
     for row in conn.execute("SELECT factor, score FROM qualitative_inputs WHERE code=?", (code,)):
         if out.get(row["factor"]) is None:
             out[row["factor"]] = row["score"]

@@ -99,4 +99,4 @@ def loss_making(research_item: dict[str, Any] | None, price: float | None) -> di
             "reference_value": round(lm["revenue_2029_per_share"] * lm["psr"], 2)}
 
 
-__all__ = ["value", "loss_making", "dividend_schedule", "replace"]
+__all__ = ["dividend_schedule", "loss_making", "replace", "value"]

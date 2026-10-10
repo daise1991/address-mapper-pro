@@ -7,6 +7,9 @@ from collections import Counter
 from datetime import date
 from typing import Any
 
+BIG_CHANGE = 30  # v4→v5 でこの点数以上動いたものを「大きな変動」として一覧にする
+LABELS = {"growth": "成長", "buy": "買い", "sell": "売り"}
+
 
 def _j(x: str | None) -> Any:
     return json.loads(x) if x else {}
@@ -20,7 +23,8 @@ def compare(conn: sqlite3.Connection, d: date) -> dict[str, Any]:
                   v.buy_score AS b5, v.buy_score_no_dividend AS b5nd, v.buy_status, v.dividend_pv, v.bear_downside,
                   v.sell_formal AS s5f, v.sell_reference AS s5r, v.sell_coverage AS sc, v.sell_detail AS sdet5,
                   v.severe_risks, v.confidence, v.confidence_points, v.confidence_detail,
-                  v.buy_decision AS bd5, v.sell_decision AS sd5, v.exit_type AS et5, v.reevaluate, v.buy_detail AS bdet5
+                  v.buy_decision AS bd5, v.sell_decision AS sd5, v.exit_type AS et5, v.reevaluate, v.buy_detail AS bdet5,
+                  v.growth_detail AS gdet5, v.price
            FROM securities sec
            LEFT JOIN scores s ON s.code=sec.code AND s.run_date=?
            LEFT JOIN scores_v5 v ON v.code=sec.code AND v.run_date=?
@@ -31,6 +35,9 @@ def compare(conn: sqlite3.Connection, d: date) -> dict[str, Any]:
         risks = _j(r["severe_risks"]) or []
         conf = _j(r["confidence_detail"])
         bdet = _j(r["bdet5"])
+        gdet = _j(r["gdet5"])
+        sdet5 = _j(r["sdet5"])
+        pb = bdet.get("per_basis") or {}
         items.append({
             "code": r["code"], "name": r["name"],
             "growth": {"v4": r["g4"], "v5_formal": r["g5f"], "v5_reference": r["g5r"], "coverage": r["gc"]},
@@ -43,6 +50,13 @@ def compare(conn: sqlite3.Connection, d: date) -> dict[str, Any]:
             "severe_risks": risks, "eval_status": r["eval_status"],
             "decisions": {"v4_buy": r["bd4"], "v5_buy": r["bd5"], "v4_sell": r["sd4"], "v5_sell": r["sd5"],
                           "v4_exit": r["et4"], "v5_exit": r["et5"], "v5_reevaluate": bool(r["reevaluate"])},
+            "price": r["price"],
+            "growth_formal_if_qualitative_verified": gdet.get("formal_if_qualitative_verified"),
+            "unevaluated": sorted(set(gdet.get("unevaluated") or []) | set(sdet5.get("unevaluated") or [])),
+            "per_basis": {"median": pb.get("median"), "p25": pb.get("p25"), "p75": pb.get("p75"),
+                          "valid_months": pb.get("valid_months"), "anomalies": pb.get("anomalies") or [],
+                          "research_base_per": (bdet.get("research_per") or {}).get("base_per"),
+                          "buy_with_research_per": (bdet.get("research_per") or {}).get("buy_score")},
             "dilution": {"v4": ((_j(r["sdet4"]).get("factors") or {}).get("dilution") or {}).get("score"),
                          "v5": ((_j(r["sdet5"]).get("items") or {}).get("dilution") or {}).get("score")},
         })
@@ -57,6 +71,25 @@ def compare(conn: sqlite3.Connection, d: date) -> dict[str, Any]:
     buy5 = {i["code"] for i in items if i["decisions"]["v5_buy"] in ("aggressive", "normal")}
     sell4 = {i["code"] for i in items if i["decisions"]["v4_sell"] in ("priority", "candidate")}
     sell5 = {i["code"] for i in items if i["decisions"]["v5_sell"] in ("priority", "candidate")}
+    anomalies = []
+    for i in items:
+        notes = []
+        for key, a, b in (("growth", "v4", "v5_reference"), ("buy", "v4", "v5"), ("sell", "v4", "v5_reference")):
+            x, y = i[key][a], i[key][b]
+            if x is not None and y is not None and abs(y - x) >= BIG_CHANGE:
+                notes.append(f"{LABELS[key]} {x}→{y}")
+        if i["per_basis"]["anomalies"]:
+            notes.append("PER: " + "／".join(i["per_basis"]["anomalies"]))
+        if i["price"] is None:
+            notes.append("当日の株価なし")
+        if i["eval_status"] is None:
+            notes.append("v5 の採点なし")
+        if i["confidence_forced_d"]:
+            notes.append(f"信頼度D強制: {i['confidence_forced_d']}")
+        if i["dilution"]["v5"] and i["dilution"]["v5"] >= 50:
+            notes.append(f"希薄化 {i['dilution']['v5']}（分割の誤判定でないか要確認）")
+        if notes:
+            anomalies.append({"code": i["code"], "name": i["name"], "notes": notes, "unevaluated": i["unevaluated"]})
     kawasaki = next((i for i in items if i["code"] == "7012"), None)
     return {
         "date": d.isoformat(), "count": len(items),
@@ -70,7 +103,13 @@ def compare(conn: sqlite3.Connection, d: date) -> dict[str, Any]:
                           "reference_only": sum(1 for i in items if i["growth"]["v5_formal"] is None and i["growth"]["v5_reference"] is not None)},
         "severe_risk_codes": [(i["code"], i["name"], [x["type"] + ":" + x["detail"] for x in i["severe_risks"]]) for i in items if i["severe_risks"]],
         "candidates": {"v4_buy": sorted(buy4), "v5_buy": sorted(buy5), "v4_sell": sorted(sell4), "v5_sell": sorted(sell5),
-                       "buy_removed": sorted(buy4 - buy5), "buy_added": sorted(buy5 - buy4)},
+                       "buy_removed": sorted(buy4 - buy5), "buy_added": sorted(buy5 - buy4),
+                       "sell_removed": sorted(sell4 - sell5), "sell_added": sorted(sell5 - sell4)},
+        "formal_count": sum(1 for i in items if i["eval_status"] == "formal"),
+        "growth_formal_if_qualitative_verified": sum(1 for i in items if i["growth_formal_if_qualitative_verified"] is not None),
+        "per_applied": sum(1 for i in items if i["per_basis"]["median"] is not None),
+        "per_anomaly_codes": [(i["code"], i["name"], i["per_basis"]["anomalies"]) for i in items if i["per_basis"]["anomalies"]],
+        "anomalies": anomalies,
         "kawasaki_split_check": kawasaki and {"v4_sell": kawasaki["sell"]["v4"], "v5_sell": kawasaki["sell"]["v5_reference"],
                                               "v4_dilution": kawasaki["dilution"]["v4"], "v5_dilution": kawasaki["dilution"]["v5"]},
         "items": items,
@@ -83,15 +122,27 @@ def to_markdown(rep: dict[str, Any]) -> str:
     L.append(f"- 成長期待点 v5参考−v4: {rep['growth_diff_v5ref_minus_v4']} ／ v5正式 {rep['growth_status']['formal']}銘柄・参考のみ {rep['growth_status']['reference_only']}銘柄")
     L.append(f"- 買い点数 v5−v4: {rep['buy_diff_v5_minus_v4']} ／ 配当加算の効果: {rep['buy_dividend_effect']}")
     L.append(f"- 売り点数 v5参考−v4: {rep['sell_diff_v5ref_minus_v4']}")
-    L.append(f"- 購入候補 v4 {rep['candidates']['v4_buy']} → v5 {rep['candidates']['v5_buy']} ／ 売却候補 v4 {rep['candidates']['v4_sell']} → v5 {rep['candidates']['v5_sell']}")
+    c = rep["candidates"]
+    L.append(f"- 正式評価: {rep['formal_count']}銘柄（定性評価の裏付け後に成長期待点が正式になり得る銘柄: {rep['growth_formal_if_qualitative_verified']}）")
+    L.append(f"- 想定PER（過去5年中央値）を適用: {rep['per_applied']}銘柄 ／ PERの異常の目印: {len(rep['per_anomaly_codes'])}銘柄")
+    L.append(f"- 購入候補 v4 {c['v4_buy']} → v5 {c['v5_buy']}（追加 {c['buy_added']}・除外 {c['buy_removed']}）")
+    L.append(f"- 売却候補 v4 {c['v4_sell']} → v5 {c['v5_sell']}（追加 {c['sell_added']}・除外 {c['sell_removed']}）")
     L.append(f"- 川崎重工: {rep['kawasaki_split_check']}")
     L.append(f"- 重大リスク: {rep['severe_risk_codes'] or 'なし'}")
-    L += ["", "| 銘柄 | 状態 | 信頼度 | 成長 v4→v5(正式/参考・充足率) | 買い v4→v5(配当前) | 弱気時 | 売り v4→v5(正式/参考) | 重大リスク |",
-          "|---|---|---|---|---|---|---|---|"]
+    L += ["", "| 銘柄 | 状態 | 信頼度 | 成長 v4→v5(正式/参考・充足率) | 買い v4→v5(配当前／調査PER) | PER中央値(25-75%) | 弱気時 | 売り v4→v5(正式/参考・充足率) | 重大リスク |",
+          "|---|---|---|---|---|---|---|---|---|"]
     for i in rep["items"]:
         g, b, s = i["growth"], i["buy"], i["sell"]
         bd = f"{b['bear_downside']:+.0%}" if b["bear_downside"] is not None else "—"
+        pb = i["per_basis"]
+        per = f"{pb['median']}({pb['p25']}-{pb['p75']})" if pb["median"] is not None else "—"
         L.append(f"| {i['code']} {i['name']} | {i['eval_status']} | {i['confidence']} | {g['v4']}→{g['v5_formal']}/{g['v5_reference']}（{g['coverage']}） | "
-                 f"{b['v4']}→{b['v5'] if b['v5'] is not None else '未算定'}（{b['v5_no_dividend']}） | {bd} | {s['v4']}→{s['v5_formal']}/{s['v5_reference']} | "
-                 f"{'、'.join(x['type'] for x in i['severe_risks']) or '—'} |")
+                 f"{b['v4']}→{b['v5'] if b['v5'] is not None else '未算定'}（{b['v5_no_dividend']}／{pb['buy_with_research_per']}） | {per} | {bd} | "
+                 f"{s['v4']}→{s['v5_formal']}/{s['v5_reference']}（{s['coverage']}） | {'、'.join(x['type'] for x in i['severe_risks']) or '—'} |")
+    L += ["", "## 異常な点数変動・欠損データ・想定外の判定", ""]
+    for a in rep["anomalies"]:
+        miss = f" ／ 未評価: {'、'.join(a['unevaluated'])}" if a["unevaluated"] else ""
+        L.append(f"- {a['code']} {a['name']}: {'；'.join(a['notes'])}{miss}")
+    if not rep["anomalies"]:
+        L.append("- なし")
     return "\n".join(L)
