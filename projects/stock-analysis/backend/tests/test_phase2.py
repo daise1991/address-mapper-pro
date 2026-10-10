@@ -120,6 +120,10 @@ def test_alerts_and_dedupe(conn):
     code = "6857"
     conn.execute("INSERT INTO holdings (code, quantity, avg_cost, account, updated_at) VALUES (?, 1, 1, 'specific', 'x')", (code,))
     conn.execute("UPDATE scores SET buy_score=80, price=100, target_price=120 WHERE code=? AND run_date=?", (code, D.isoformat()))
+    # 自動推計の前提では買い系の通知を出さない
+    assert not {a["kind"] for a in alerts.detect(conn, D) if a["code"] == code} & {"buy75", "target"}
+    conn.execute("""UPDATE scores SET buy_detail=json_set(buy_detail, '$.assumption_origin', 'manual')
+                    WHERE code=? AND run_date=?""", (code, D.isoformat()))
     conn.execute("INSERT INTO disclosures (code, disclosed_at, title, category, source, fetched_at) VALUES (?,?,?,?,?,?)",
                  (code, f"{D.isoformat()}T15:30:00+09:00", "業績予想の下方修正", "revision_down", "test", "x"))
     conn.commit()
@@ -132,7 +136,8 @@ def test_alerts_and_dedupe(conn):
 
 def test_order_plan_monthly_budget_and_upper_limit(conn):
     run_daily(conn, DemoProvider(), D, datetime.combine(D, time(18, 5), JST))
-    conn.execute("UPDATE scores SET buy_decision='aggressive', price=1000 WHERE code='6857'")
+    conn.execute("UPDATE scores SET buy_decision='aggressive', price=1000 WHERE code IN ('6857','8035')")
+    conn.execute("UPDATE scores SET buy_detail=json_set(buy_detail, '$.assumption_origin', 'manual') WHERE code='6857'")
     conn.execute("INSERT INTO cash_balance (as_of, amount) VALUES ('2026-10-09', 10000000)")
     conn.execute("INSERT INTO holdings (code, quantity, avg_cost, account, acquired_at, updated_at) VALUES ('8035', 10, 1000, 'specific', '2026-10-01', 'x')")
     conn.commit()
@@ -142,6 +147,8 @@ def test_order_plan_monthly_budget_and_upper_limit(conn):
     assert o["upper_limit_price"] == 1030.0 and o["quantity"] == 19  # 20,000 / 1,030
     assert sum(x["estimated_amount"] for x in plan["buy_orders"]) <= 20000
     assert "指値注文ができません" in plan["s_kabu_note"]
+    assert [o["code"] for o in plan["buy_orders"]] == ["6857"]  # 8035 は前提未確認のため除外
+    assert any(x["code"] == "8035" and "前提未確認" in x["reason"] for x in plan["skipped"])
 
 
 def test_method_version_archive_and_benchmark(conn):
@@ -153,3 +160,18 @@ def test_method_version_archive_and_benchmark(conn):
     assert conn.execute("SELECT COUNT(*) FROM benchmark_quotes WHERE name='TOPIX'").fetchone()[0] > 200
     s = summary(conn, 5, benchmark="TOPIX")
     assert s["benchmark_label"] == "TOPIX" and "買い85点以上(k=150 比較)" in s["rules"]
+
+
+def test_cyclical_auto_baseline_uses_median_profit_not_peak(conn):
+    from stock_analysis.assumptions import auto_baseline
+    # 8035 は景気循環分類。直近期だけ利益が突出（ピーク）しても中央値で評価する。分割前の EPS は使わない
+    for y, ni, eps in ((2022, 100e8, 500.0), (2023, 120e8, 600.0), (2024, 110e8, 110.0), (2025, 400e8, 400.0)):
+        upsert(conn, "financials", {
+            "code": "8035", "fiscal_period_end": f"{y}-03-31", "period_type": "FY",
+            "disclosed_at": f"{y}-05-10T15:00:00+09:00", "net_income": ni, "eps": eps,
+            "shares_outstanding": 1e8, "treasury_shares": 0, "forecast_net_income": 300e8, "forecast_eps": 300.0, "forecast_fy_end": f"{y + 1}-03-31",
+            "source": "test", "fetched_at": "x"}, ["code", "fiscal_period_end", "period_type", "disclosed_at"])
+    a = auto_baseline(conn, "8035", D)
+    assert a.method == "normalized"
+    # 純利益 100,120,110,400 と予想 300 の中央値 120億 ÷ 1億株 = 120円（ピークの400円ではない）
+    assert a.normalized_eps == pytest.approx(120.0)

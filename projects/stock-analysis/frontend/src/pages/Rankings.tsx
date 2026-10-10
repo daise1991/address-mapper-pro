@@ -103,7 +103,12 @@ export default function Rankings({ meta, onOpen }: { meta: Meta; onOpen: (c: str
                   {r.target_price && r.price ? (r.price <= r.target_price ? "到達" : `あと${((1 - r.target_price / r.price) * 100).toFixed(0)}%下落`) : "—"}
                 </td>
                 <td>{r.theoretical_value && r.price ? `${(((r.theoretical_value / r.price) - 1) * 100).toFixed(0)}%` : "—"}</td>
-                <td className="l"><Decision type="buy" value={r.buy_decision} labels={meta.buy_labels} /></td>
+                <td className="l">
+                  <Decision type="buy" value={r.buy_decision} labels={meta.buy_labels} />
+                  {r.buy_detail?.assumption_origin === "auto" && ["aggressive", "normal", "check"].includes(r.buy_decision) && (
+                    <span className="badge warn" title="会社予想から機械的に作った仮の前提です。銘柄詳細で前提を登録すると注文案・通知の対象になります"> 前提未確認</span>
+                  )}
+                </td>
                 <td className="l">
                   <Decision type="sell" value={r.sell_decision} labels={meta.sell_labels} />{" "}
                   {r.exit_type && <Decision type="exit" value={r.exit_type} labels={meta.exit_labels} />}
@@ -113,7 +118,7 @@ export default function Rankings({ meta, onOpen }: { meta: Meta; onOpen: (c: str
           </tbody>
         </table>
       </div>
-      <p className="muted">成長期待点・売り点数の配点は「通知・システム → 配点設定」で確認・変更できます。「自」= 評価前提が自動初期推計（会社予想ベース）。銘柄詳細で根拠付きの前提に置き換えてください。買い点数にカーソルを合わせると係数150の比較値を表示します。</p>
+      <p className="muted">「前提未確認」の銘柄は、評価前提（予想EPS・想定PER）が自動推計のため、注文案と購入通知の対象外です。成長期待点・売り点数の配点は「通知・システム → 配点設定」で確認・変更できます。「自」= 評価前提が自動初期推計（会社予想ベース）。銘柄詳細で根拠付きの前提に置き換えてください。買い点数にカーソルを合わせると係数150の比較値を表示します。</p>
     </div>
   );
 }

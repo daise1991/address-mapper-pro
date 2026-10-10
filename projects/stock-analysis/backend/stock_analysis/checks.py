@@ -113,3 +113,43 @@ def run_all() -> list[dict[str, Any]]:
     else:
         results.append({"name": "EDINET", "status": "未設定", "detail": "EDINET_API_KEY が空です（任意。有利子負債・増資の取得に使用）"})
     return results
+
+
+def explain(conn: Any, code: str, d: date | None = None) -> list[str]:
+    """買い点数の計算根拠（使った決算・予想・前提・計算過程）を文字で返す。極端な値の原因調査用。"""
+    from .assumptions import resolve
+    from .scoring.features import latest_forecast
+    from .scoring.valuation import evaluate
+
+    if d is None:
+        r = conn.execute("SELECT MAX(run_date) FROM scores WHERE code=?", (code,)).fetchone()
+        d = date.fromisoformat(r[0]) if r and r[0] else date.today()
+    sec = conn.execute("SELECT name, category, asset_type FROM securities WHERE code=?", (code,)).fetchone()
+    if not sec:
+        return [f"{code} は登録されていません"]
+    out = [f"■ {code} {sec['name']}（分類: {sec['category']} / {sec['asset_type']}）  評価日 {d}"]
+    q = conn.execute("SELECT date, close, adj_close, adjustment_factor, source FROM daily_quotes WHERE code=? AND date<=? ORDER BY date DESC LIMIT 1",
+                     (code, d.isoformat())).fetchone()
+    out.append(f"株価: {dict(q) if q else '無し'}")
+    cutoff = f"{d.isoformat()}T23:59:59+09:00"
+    fys = conn.execute(
+        """SELECT fiscal_period_end, period_type, disclosed_at, document_type, eps, forecast_eps, forecast_fy_end,
+                  net_income, shares_outstanding, source FROM financials
+           WHERE code=? AND disclosed_at<=? ORDER BY disclosed_at DESC LIMIT 6""", (code, cutoff)).fetchall()
+    out.append("直近の決算データ（新しい順）:")
+    out += [f"  {dict(r)}" for r in fys] or ["  無し"]
+    fy = next((r for r in fys if r["period_type"] == "FY"), None)
+    if fy:
+        lf = latest_forecast(conn, code, fy["fiscal_period_end"], cutoff)
+        out.append(f"採用した最新の会社予想: {lf}")
+        if fy["net_income"] and fy["shares_outstanding"] and fy["eps"]:
+            implied = fy["net_income"] / fy["shares_outstanding"]
+            ratio = fy["eps"] / implied if implied else None
+            out.append(f"検算: 純利益÷発行済株式数 = {implied:.1f}円（EPS {fy['eps']}円との比 {ratio:.2f}）"
+                       + ("  ← 株式分割・単位の不一致の可能性" if ratio and not 0.8 < ratio < 1.25 else ""))
+    a, origin = resolve(conn, code, d)
+    out.append(f"評価前提（{origin}）: {a}")
+    v = evaluate(a, q["close"] if q else None, d)
+    out.append(f"計算: 将来株価={v.future_price} 年数={v.years} 理論価値V={v.theoretical_value} V/P={v.v_over_p} "
+               f"買い点数={v.buy_score}（k150={v.buy_score_k150}） 理由: {v.reason}")
+    return out

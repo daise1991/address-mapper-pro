@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import statistics
 from dataclasses import asdict, fields
 from datetime import date
 from typing import Any
@@ -57,21 +58,38 @@ def auto_baseline(conn: sqlite3.Connection, code: str, as_of: date) -> Assumptio
         return None
     cat = sec["category"]
     fy_end = date.fromisoformat(fy["fiscal_period_end"])
+    d = CATEGORY_DEFAULTS[cat]
+    common = dict(target_year=DEFAULT_TARGET_YEAR, fiscal_month_end=fy_end.month,
+                  required_return=d["required_return"], safety_margin=d["safety_margin"], assumed_per=AUTO_PER[cat])
+    tail = (f"{d['label']}の初期仮定（必要利回り{d['required_return']:.1%}・安全余裕{d['safety_margin']:.0%}）。要個別見直し")
+
+    if cat == "cyclical":
+        # 景気循環株は直近の利益水準ではなく、過去最大5期の純利益と今期予想の中央値を「正常化利益」とする。
+        # 株式分割の影響を受けないよう、EPS ではなく純利益を現在の株式数で割る
+        hist = conn.execute(
+            """SELECT fiscal_period_end, MAX(disclosed_at), net_income, shares_outstanding, treasury_shares
+               FROM financials WHERE code=? AND period_type='FY' AND disclosed_at<=? AND net_income IS NOT NULL
+               GROUP BY fiscal_period_end ORDER BY fiscal_period_end DESC LIMIT 5""",
+            (code, f"{as_of.isoformat()}T23:59:59+09:00")).fetchall()
+        shares = (fy["shares_outstanding"] or 0) - (fy["treasury_shares"] or 0)
+        profits = [h["net_income"] for h in hist]
+        if lf and lf["forecast_net_income"] is not None:
+            profits.append(lf["forecast_net_income"])
+        if shares <= 0 or len(profits) < 2:
+            return None
+        normalized = statistics.median(profits) / shares
+        if normalized <= 0:
+            return None
+        return Assumption(method="normalized", normalized_eps=normalized, **common,
+                          reason=(f"自動初期推計: 正常化EPS {normalized:.1f}円（過去{len(hist)}期の純利益と今期予想の中央値÷現在の株式数）、"
+                                  f"想定PER {AUTO_PER[cat]:.0f}倍、" + tail))
+
     base_year = fy_end.year + 1  # 予想は翌期
     n = max(DEFAULT_TARGET_YEAR - base_year, 0)
     g = AUTO_GROWTH[cat]
-    d = CATEGORY_DEFAULTS[cat]
-    method = "normalized" if cat == "cyclical" else "per"
     eps_target = base_eps * (1 + g) ** n
-    return Assumption(
-        method=method, target_year=DEFAULT_TARGET_YEAR, fiscal_month_end=fy_end.month,
-        required_return=d["required_return"], safety_margin=d["safety_margin"],
-        eps_forecast=eps_target if method == "per" else None,
-        normalized_eps=eps_target if method == "normalized" else None,
-        assumed_per=AUTO_PER[cat],
-        reason=(f"自動初期推計: 会社予想EPS {base_eps:.1f}円×(1+{g:.0%})^{n}、想定PER {AUTO_PER[cat]:.0f}倍、"
-                f"{d['label']}の初期仮定（必要利回り{d['required_return']:.1%}・安全余裕{d['safety_margin']:.0%}）。要個別見直し"),
-    )
+    return Assumption(method="per", eps_forecast=eps_target, **common,
+                      reason=f"自動初期推計: 会社予想EPS {base_eps:.1f}円×(1+{g:.0%})^{n}、想定PER {AUTO_PER[cat]:.0f}倍、" + tail)
 
 
 def resolve(conn: sqlite3.Connection, code: str, as_of: date) -> tuple[Assumption | None, str]:

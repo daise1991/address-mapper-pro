@@ -38,8 +38,9 @@ def latest_scores(conn: sqlite3.Connection) -> tuple[str | None, dict[str, dict[
     if not r or not r["d"]:
         return None, {}
     sc = rows(conn.execute(
-        """SELECT s.*, sec.name, sec.category FROM scores s JOIN securities sec ON sec.code=s.code
-           WHERE s.run_date=?""", (r["d"],)))
+        """SELECT s.*, sec.name, sec.category,
+                  json_extract(s.buy_detail, '$.assumption_origin') AS assumption_origin
+           FROM scores s JOIN securities sec ON sec.code=s.code WHERE s.run_date=?""", (r["d"],)))
     return r["d"], {x["code"]: x for x in sc}
 
 
@@ -79,9 +80,15 @@ def order_plan(conn: sqlite3.Connection, today: date) -> dict[str, Any]:
     spendable = min(spendable_cash, month_left)
     held_mv = {h["code"]: (h["market_value"] or 0.0) for h in pos["holdings"]}
 
-    cands = [s for s in scores.values() if s["buy_decision"] in ("aggressive", "normal") and s["price"]]
+    all_cands = [s for s in scores.values() if s["buy_decision"] in ("aggressive", "normal") and s["price"]]
+    # 評価前提が自動推計（会社予想から機械的に作った仮の値）の銘柄は注文案に入れない
+    cands = [s for s in all_cands if s.get("assumption_origin") == "manual"]
     cands.sort(key=lambda s: (s["buy_decision"] != "aggressive", -(s["buy_score"] or 0), -(s["growth_score"] or 0)))
     orders, skipped = [], []
+    for s in all_cands:
+        if s.get("assumption_origin") != "manual":
+            skipped.append({"code": s["code"], "name": s["name"],
+                            "reason": "評価前提が自動推計（前提未確認）。銘柄詳細で前提を登録すると対象になります"})
     for s in cands:
         cap_w = policy["max_weight_emerging"] if s["category"] == "emerging_loss" else policy["max_weight_per_stock"]
         ratio = policy["aggressive_budget_ratio"] if s["buy_decision"] == "aggressive" else policy["normal_budget_ratio"]

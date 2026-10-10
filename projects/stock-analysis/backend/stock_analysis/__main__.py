@@ -123,6 +123,10 @@ def main() -> None:
     sv.add_argument("--port", type=int, default=8000)
     sub.add_parser("gen-vapid", help="プッシュ通知用の鍵を生成して backend/.env に保存（未設定時のみ）")
     sub.add_parser("test-push", help="登録済みの端末にテスト通知を送る")
+    rs = sub.add_parser("rescore", help="最新（または指定日）の採点をやり直す。計算方式を更新したあとに使う")
+    rs.add_argument("--date")
+    ex = sub.add_parser("explain", help="銘柄の買い点数の計算根拠を表示（例: explain 5711）")
+    ex.add_argument("code")
     sub.add_parser("check", help="J-Quants / EDINET の接続チェック（キー設定後に最初に実行）")
     eb = sub.add_parser("edinet-backfill", help="過去の有価証券報告書から有利子負債を取り込む（1日あたり約3秒）")
     eb.add_argument("--days", type=int, default=400)
@@ -165,6 +169,17 @@ def main() -> None:
         n = conn.execute("SELECT COUNT(*) FROM push_subscriptions").fetchone()[0]
         sent = notify(conn, "test", "テスト通知", "株分析アプリからの通知テストです", "/")
         print(f"登録端末 {n}台中 {sent}台に送信しました" + ("" if n else "（先に画面の『この端末で通知を受け取る』を押してください）"))
+    elif args.cmd == "rescore":
+        from .analysis import run_scoring
+        conn = connect()
+        d0 = args.date or conn.execute("SELECT MAX(run_date) FROM scores").fetchone()[0]
+        if not d0:
+            raise SystemExit("採点履歴がありません。先に run-daily を実行してください")
+        n = len(run_scoring(conn, date.fromisoformat(d0)))
+        print(f"{d0} の {n}銘柄を採点し直しました（変更前の結果は scores_archive に保存）")
+    elif args.cmd == "explain":
+        from .checks import explain
+        print("\n".join(explain(connect(), args.code.upper())))
     elif args.cmd == "check":
         from .checks import run_all
         results = run_all()

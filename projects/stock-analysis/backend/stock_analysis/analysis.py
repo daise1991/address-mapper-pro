@@ -19,7 +19,7 @@ from .universe import active_codes
 
 # 計算方式のバージョン。採点ロジックを変えたら必ず上げる（変更前の結果は scores_archive に残る）。
 # 配点・判定閾値の変更は rules:<ID> 部分が変わることで区別される
-METHOD_VERSION = "2026.10-v1"
+METHOD_VERSION = "2026.10-v2"  # v2: 景気循環株の自動推計を正常化利益（中央値）に変更
 
 
 def version_label(weights: dict[str, dict[str, float]]) -> str:

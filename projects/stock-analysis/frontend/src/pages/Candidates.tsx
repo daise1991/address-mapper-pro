@@ -37,6 +37,7 @@ function Group({ title, rows, meta, onOpen }: { title: string; rows: ScoreRow[];
                 <td>{fmt(r.target_price)}</td>
                 <td className="l">
                   <Decision type="buy" value={r.buy_decision} labels={meta.buy_labels} />{" "}
+                  {r.buy_detail?.assumption_origin === "auto" && <span className="badge warn">前提未確認</span>}{" "}
                   {r.held && <Decision type="sell" value={r.sell_decision} labels={meta.sell_labels} />}{" "}
                   {r.held && r.exit_type && <Decision type="exit" value={r.exit_type} labels={meta.exit_labels} />}
                 </td>

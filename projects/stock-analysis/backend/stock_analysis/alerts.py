@@ -52,15 +52,17 @@ def detect(conn: sqlite3.Connection, d: date) -> list[dict[str, Any]]:
     for code, s in today.items():
         p = prev.get(code, {})
         name = f"{s['name']}({code})"
-        if (s["buy_score"] or 0) >= 75 and (p.get("buy_score") or 0) < 75:
+        # 買い系の通知は、評価前提を登録した銘柄だけ（自動推計の仮の値では通知しない）
+        confirmed = json.loads(s["buy_detail"] or "{}").get("assumption_origin") == "manual"
+        if confirmed and (s["buy_score"] or 0) >= 75 and (p.get("buy_score") or 0) < 75:
             add("buy75", code, d.isoformat(), f"{name} 買い{s['buy_score']}点（前回{p.get('buy_score') if p.get('buy_score') is not None else '—'}）")
-        if s["buy_decision"] in ("aggressive", "normal") and p.get("buy_decision") not in ("aggressive", "normal"):
+        if confirmed and s["buy_decision"] in ("aggressive", "normal") and p.get("buy_decision") not in ("aggressive", "normal"):
             add("criteria", code, d.isoformat(),
                 f"{name} 成長{s['growth_score']}・買い{s['buy_score']}・売り{s['sell_score']}で購入基準を満たしました")
         if code in held and (s["sell_score"] or 0) >= 75 and (p.get("sell_score") or 0) < 75:
             kind = "利益確定" if s["exit_type"] == "profit_taking" else "損切り・撤退" if s["exit_type"] == "stop_loss" else "要確認"
             add("sell75", code, d.isoformat(), f"{name} 売り{s['sell_score']}点（{kind}候補）")
-        if s["target_price"] and s["price"] and s["price"] <= s["target_price"]:
+        if confirmed and s["target_price"] and s["price"] and s["price"] <= s["target_price"]:
             was = p.get("target_price") and p.get("price") and p["price"] <= p["target_price"]
             if not was:
                 # 同じ狙い目価格（100円単位）での再通知は抑止する
