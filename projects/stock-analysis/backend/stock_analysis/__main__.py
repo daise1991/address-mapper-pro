@@ -89,7 +89,22 @@ def setup_logging(log_file: str | None) -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", handlers=handlers)
 
 
+def ensure_console_streams() -> None:
+    """pythonw（窓なし起動）では標準出力が None になり、uvicorn が起動時に落ちるため、ファイルへ向ける。"""
+    import sys
+    if sys.stdout is not None and sys.stderr is not None:
+        return
+    path = get_settings().db_path.parent / "console.log"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    stream = open(path, "a", encoding="utf-8", buffering=1)  # noqa: SIM115 — プロセス終了まで開いたまま
+    if sys.stdout is None:
+        sys.stdout = stream
+    if sys.stderr is None:
+        sys.stderr = stream
+
+
 def main() -> None:
+    ensure_console_streams()
     ap = argparse.ArgumentParser(prog="stock_analysis")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("init")

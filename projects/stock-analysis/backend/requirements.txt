@@ -2,6 +2,8 @@ fastapi>=0.115
 uvicorn>=0.30
 requests>=2.31
 jpholiday>=0.1.10
+# Windows には時刻帯データ（Asia/Tokyo）が無いため必要
+tzdata>=2024.1
 pydantic>=2.6
 # Web Push（任意）
 pywebpush>=2.0
