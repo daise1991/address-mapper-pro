@@ -23,7 +23,7 @@ from ..scoring.valuation import years_until
 from . import confidence, growth, per_history, qualitative, risk, sell, valuation
 from .features import build, company_forecast_errors
 
-VERSION = "2026.10-v5"
+VERSION = "2026.10-v5.1"  # v5.1: 購入候補に「株価≦狙い目」、乖離率（%）を保存
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS scores_v5 (
@@ -148,7 +148,8 @@ def score_one(conn: sqlite3.Connection, code: str, d: date) -> dict[str, Any]:
 
     rs = v4rules.RuleSet()
     sell_for_decision = s["formal"] if s["formal"] is not None else s["reference"]
-    buy_dec = v4rules.buy_decision(g["formal"], base.get("buy_score"), s["formal"], rs) if formal else None
+    buy_dec = (v4rules.buy_decision(g["formal"], base.get("buy_score"), s["formal"], rs, price=price,
+                                     target_price=base.get("target_price"), require_target=True) if formal else None)
     if buy_dec in ("aggressive", "normal") and risk.blocks_purchase(risks):
         buy_dec = "blocked_by_risk"
     sell_dec = v4rules.sell_decision(sell_for_decision, rs)
@@ -157,6 +158,8 @@ def score_one(conn: sqlite3.Connection, code: str, d: date) -> dict[str, Any]:
                  "factors": {k: {"score": it["score"]} for k, it in s["items"].items()}}
     exit_t = "stop_loss" if risks else v4rules.exit_type(sell_like, g["formal"] or g["reference"], rs)
 
+    tv = base.get("theoretical_value")
+    gap_pct = round((tv / price - 1) * 100, 1) if (tv and price) else None  # 理論価値と株価の乖離率（点数が0・100で頭打ちでも差が分かる）
     bear_v = vals.get("bear", {}).get("theoretical_value") if vals else None
     sector = conn.execute("SELECT sector FROM securities WHERE code=?", (code,)).fetchone()
     row = {
@@ -170,7 +173,7 @@ def score_one(conn: sqlite3.Connection, code: str, d: date) -> dict[str, Any]:
         "theoretical_value": base.get("theoretical_value"), "theoretical_value_no_dividend": base.get("theoretical_value_no_dividend"),
         "dividend_pv": (base.get("dividend") or {}).get("pv"), "target_price": base.get("target_price"),
         "bear_downside": round(bear_v / price - 1, 4) if (bear_v and price) else None,
-        "buy_detail": json.dumps({"base": base, "scenarios": vals, "reference_buy_score": base.get("buy_score"),
+        "buy_detail": json.dumps({"base": base, "gap_pct": gap_pct, "scenarios": vals, "reference_buy_score": base.get("buy_score"),
                                   "assumption_status": r.get("status") if r else "unconfirmed",
                                   "anchor_ratio": sa["anchor_ratio"] if sa else None,
                                   "per_basis": pb,

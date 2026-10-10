@@ -36,6 +36,7 @@ BUY_LABELS = {
     "wait_discount": "割安待ち",
     "unrated": "未算定",
     "none": "対象外",
+    "above_target": "狙い目価格待ち",
 }
 SELL_LABELS = {
     "priority": "売却優先検討",
@@ -48,7 +49,16 @@ SELL_LABELS = {
 EXIT_LABELS = {"profit_taking": "利益確定候補", "stop_loss": "損切り・撤退候補"}
 
 
-def buy_decision(growth: int | None, buy: int | None, sell: int | None, r: RuleSet = RuleSet()) -> str:
+def buy_decision(growth: int | None, buy: int | None, sell: int | None, r: RuleSet = RuleSet(),
+                 price: float | None = None, target_price: float | None = None, require_target: bool = False) -> str:
+    """require_target=True（v5 の参考計算だけ）のとき、購入候補は株価が狙い目価格以下であることも条件にする。"""
+    d = _buy_decision(growth, buy, sell, r)
+    if require_target and d in ("aggressive", "normal") and (price is None or target_price is None or price > target_price):
+        return "above_target"
+    return d
+
+
+def _buy_decision(growth: int | None, buy: int | None, sell: int | None, r: RuleSet) -> str:
     if buy is None:
         return "unrated"
     if growth is None or sell is None:

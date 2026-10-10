@@ -417,3 +417,23 @@ def test_v5_not_run_in_daily_pipeline_by_default(monkeypatch):
     from stock_analysis.config import Settings
     monkeypatch.delenv("STOCK_V5_SHADOW", raising=False)
     assert Settings().v5_shadow is False
+
+
+def test_buy_candidate_requires_price_at_or_below_target():
+    from stock_analysis.scoring import rules
+    # v4 の呼び方（狙い目条件なし）は従来どおり
+    assert rules.buy_decision(85, 90, 20) == "aggressive"
+    assert rules.buy_decision(85, 90, 20, price=1000, target_price=900) == "aggressive"
+    # v5（require_target）は株価が狙い目より高ければ候補にしない
+    assert rules.buy_decision(85, 90, 20, price=1000, target_price=900, require_target=True) == "above_target"
+    assert rules.buy_decision(85, 90, 20, price=900, target_price=900, require_target=True) == "aggressive"
+    assert rules.buy_decision(80, 75, 40, price=None, target_price=900, require_target=True) == "above_target"
+    assert rules.buy_decision(80, 70, 40, price=1000, target_price=900, require_target=True) == "check"
+
+
+def test_gap_pct_is_saved_beside_buy_score(conn):
+    full_setup(conn, approve=False)
+    r = engine.score_one(conn, CODE, D)
+    b = json.loads(r["buy_detail"])
+    tv = b["base"]["theoretical_value"]
+    assert b["gap_pct"] == round((tv / r["price"] - 1) * 100, 1)
