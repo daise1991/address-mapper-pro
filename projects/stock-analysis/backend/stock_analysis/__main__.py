@@ -246,7 +246,12 @@ def main() -> None:
         conn = connect()
         res = qualitative.import_items(conn, json.loads(Path(args.path).read_text(encoding="utf-8")), Path(args.path).name)
         for r in res:
-            print(f"{r['code']}: 市場拡大 {r['market_expansion']} / 競争優位 {r['competitive_advantage']} / 保存 {'済' if r['saved'] else '不可'}")
+            ref, fm = r["reference"], r["formal"]
+            print(f"{r['code']}: 参考 市場拡大 {ref['market_expansion']} / 競争優位 {ref['competitive_advantage']}"
+                  f" ｜ 正式 市場拡大 {fm['market_expansion']} / 競争優位 {fm['competitive_advantage']}"
+                  f" ｜ 保存 {'済' if r['saved'] else '不可'}")
+            for k, why in r["unevaluated"].items():
+                print(f"   - 正式は未評価（{k}）: {why}")
             for i in r["issues"]:
                 print(f"   ! {i}")
     elif args.cmd == "explain":

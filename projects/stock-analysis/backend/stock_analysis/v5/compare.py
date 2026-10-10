@@ -52,6 +52,7 @@ def compare(conn: sqlite3.Connection, d: date) -> dict[str, Any]:
                           "v4_exit": r["et4"], "v5_exit": r["et5"], "v5_reevaluate": bool(r["reevaluate"])},
             "price": r["price"],
             "growth_formal_if_qualitative_verified": gdet.get("formal_if_qualitative_verified"),
+            "qualitative": gdet.get("qualitative") or {},
             "unevaluated": sorted(set(gdet.get("unevaluated") or []) | set(sdet5.get("unevaluated") or [])),
             "per_basis": {"median": pb.get("median"), "p25": pb.get("p25"), "p75": pb.get("p75"),
                           "valid_months": pb.get("valid_months"), "anomalies": pb.get("anomalies") or [],
@@ -107,6 +108,10 @@ def compare(conn: sqlite3.Connection, d: date) -> dict[str, Any]:
                        "sell_removed": sorted(sell4 - sell5), "sell_added": sorted(sell5 - sell4)},
         "formal_count": sum(1 for i in items if i["eval_status"] == "formal"),
         "growth_formal_if_qualitative_verified": sum(1 for i in items if i["growth_formal_if_qualitative_verified"] is not None),
+        "qualitative_formal": {k: sum(1 for i in items if ((i["qualitative"].get("formal") or {}).get(k)) is not None)
+                               for k in ("market_expansion", "competitive_advantage")},
+        "qualitative_reference": {k: sum(1 for i in items if ((i["qualitative"].get("reference") or {}).get(k)) is not None)
+                                  for k in ("market_expansion", "competitive_advantage")},
         "per_applied": sum(1 for i in items if i["per_basis"]["median"] is not None),
         "per_anomaly_codes": [(i["code"], i["name"], i["per_basis"]["anomalies"]) for i in items if i["per_basis"]["anomalies"]],
         "anomalies": anomalies,
@@ -124,6 +129,9 @@ def to_markdown(rep: dict[str, Any]) -> str:
     L.append(f"- 売り点数 v5参考−v4: {rep['sell_diff_v5ref_minus_v4']}")
     c = rep["candidates"]
     L.append(f"- 正式評価: {rep['formal_count']}銘柄（定性評価の裏付け後に成長期待点が正式になり得る銘柄: {rep['growth_formal_if_qualitative_verified']}）")
+    qf, qr = rep["qualitative_formal"], rep["qualitative_reference"]
+    L.append(f"- 定性評価: 市場拡大 参考{qr['market_expansion']}・正式{qf['market_expansion']}銘柄 ／ "
+             f"競争優位 参考{qr['competitive_advantage']}・正式{qf['competitive_advantage']}銘柄（正式でない項目は未評価、0点扱いしない）")
     L.append(f"- 想定PER（過去5年中央値）を適用: {rep['per_applied']}銘柄 ／ PERの異常の目印: {len(rep['per_anomaly_codes'])}銘柄")
     L.append(f"- 購入候補 v4 {c['v4_buy']} → v5 {c['v5_buy']}（追加 {c['buy_added']}・除外 {c['buy_removed']}）")
     L.append(f"- 売却候補 v4 {c['v4_sell']} → v5 {c['v5_sell']}（追加 {c['sell_added']}・除外 {c['sell_removed']}）")
@@ -139,6 +147,18 @@ def to_markdown(rep: dict[str, Any]) -> str:
         L.append(f"| {i['code']} {i['name']} | {i['eval_status']} | {i['confidence']} | {g['v4']}→{g['v5_formal']}/{g['v5_reference']}（{g['coverage']}） | "
                  f"{b['v4']}→{b['v5'] if b['v5'] is not None else '未算定'}（{b['v5_no_dividend']}／{pb['buy_with_research_per']}） | {per} | {bd} | "
                  f"{s['v4']}→{s['v5_formal']}/{s['v5_reference']}（{s['coverage']}） | {'、'.join(x['type'] for x in i['severe_risks']) or '—'} |")
+    L += ["", "## 定性評価（参考点数／正式点数）と検証の状態", "",
+          "| 銘柄 | 市場拡大 参考/正式 | 競争優位 参考/正式 | 会社 | 市場 | 計算(市場/競争) | 正式にならない理由 |", "|---|---|---|---|---|---|---|"]
+    ok = lambda x: "済" if x else "未"
+    for i in rep["items"]:
+        q = i["qualitative"]
+        r, f, v = q.get("reference") or {}, q.get("formal") or {}, q.get("verification") or {}
+        cv = v.get("calculation_verified") or {}
+        why = "；".join(f"{'市場' if k == 'market_expansion' else '競争'}: {w}" for k, w in (q.get("unevaluated") or {}).items())
+        fmt = lambda x: "—" if x is None else x
+        L.append(f"| {i['code']} {i['name']} | {fmt(r.get('market_expansion'))}/{fmt(f.get('market_expansion'))} | "
+                 f"{fmt(r.get('competitive_advantage'))}/{fmt(f.get('competitive_advantage'))} | {ok(v.get('company_verified'))} | "
+                 f"{ok(v.get('market_verified'))} | {ok(cv.get('market_expansion'))}/{ok(cv.get('competitive_advantage'))} | {why or '—'} |")
     L += ["", "## 異常な点数変動・欠損データ・想定外の判定", ""]
     for a in rep["anomalies"]:
         miss = f" ／ 未評価: {'、'.join(a['unevaluated'])}" if a["unevaluated"] else ""

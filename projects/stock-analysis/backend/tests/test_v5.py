@@ -60,6 +60,31 @@ QUAL = {"code": CODE, "market_expansion": {"segments": [{"segment": "s", "sales_
                                                               ("orders_customers", 9), ("midterm_plan", 10))}}}
 
 
+def _src(t="primary"):
+    return {"type": t, "title": "t", "url": "https://example.com/x.pdf", "published": "2026-05-10"}
+
+
+def qual2(company=True, market=True):
+    """検査をすべて通る v2 形式の定性評価（市場60・競争優位76）。"""
+    comps = {k: {"points": p, "evidence": "e", "sources": [_src()]} for k, p in
+             (("share", 30), ("technology", 12), ("orders_customers", 9))}
+    comps["share"]["as_of"] = "FY2025"
+    comps["midterm_plan"] = {"points": 10, "evidence": "e", "plan_name": "中計2025", "target_fiscal_year": "2026-03",
+                             "actual_fiscal_year": "2026-03", "sources": [_src()]}
+    peer = lambda n, m: {"name": n, "margin": m, "fiscal_period_end": "2026-03", "accounting_standard": "JGAAP", "source": _src()}
+    comps["margin_vs_peers"] = {"points": 15, "margin_type": "operating", "sources": [_src()],
+                                "company": {"margin": 0.10, "fiscal_period_end": "2026-03", "accounting_standard": "JGAAP", "source": _src()},
+                                "peers": [peer("A", 0.08), peer("B", 0.11), peer("C", 0.13)]}
+    return {"schema_version": 2, "code": CODE, "name": "きんでん",
+            "market_expansion": {"segments": [{"segment": "s", "sales_share": 1.0, "market": "国内建設", "cagr": 0.05,
+                                               "cagr_period": "2025-2030", "base_points": 60, "fit": "f",
+                                               "source": {"publisher": "p", "title": "t", "url": "https://example.com/m",
+                                                          "published": "2025-11-18"}}],
+                                 "adjustment": 0, "score": 60},
+            "competitive_advantage": {"score": 76, "components": comps},
+            "verification": {"company_verified": company, "market_verified": market}}
+
+
 @pytest.fixture()
 def conn(tmp_path):
     c = connect(tmp_path / "v5.db")
@@ -72,7 +97,7 @@ def conn(tmp_path):
 
 def full_setup(conn, approve=True, verified=True):
     research.import_research(conn, [research_item()], D, "test")
-    qualitative.import_items(conn, [{**QUAL, "primary_verified": verified}], "test")
+    qualitative.import_items(conn, [qual2(company=verified, market=verified)], "test", D)
     if approve:
         research.approve(conn, [CODE], "ok", engine.VERSION)
 
@@ -222,12 +247,101 @@ def test_confidence_insufficient_history_is_not_zero():
 
 
 def test_qualitative_rule_recomputes_and_flags_mismatch():
-    item = json.loads(json.dumps(QUAL))
+    item = qual2()
     item["competitive_advantage"]["score"] = 99
     item["market_expansion"]["segments"][0]["base_points"] = 88
-    ev = qualitative.evaluate(item)
-    assert ev["competitive_advantage"] == 76 and ev["market_expansion"] == 60
-    assert any("再計算" in i for i in ev["issues"]) and any("補正" in i for i in ev["issues"])
+    ev = qualitative.evaluate(item, D)
+    assert ev["reference"] == {"market_expansion": 60, "competitive_advantage": 76}
+    # 調査の数値と再計算が合わない → 計算の検証が通らず、正式点数は未評価
+    assert ev["formal"] == {"market_expansion": None, "competitive_advantage": None}
+    assert not ev["verification"]["calculation_verified"]["market_expansion"]
+    assert any("再計算" in i for i in ev["errors"]["competitive_advantage"])
+
+
+def test_qualitative_v2_valid_item_is_formal():
+    ev = qualitative.evaluate(qual2(), D)
+    assert ev["formal"] == {"market_expansion": 60, "competitive_advantage": 76}
+    v = ev["verification"]
+    assert v["company_verified"] and v["market_verified"] and all(v["calculation_verified"].values())
+    assert ev["errors"] == {"market_expansion": [], "competitive_advantage": []}
+
+
+def test_qualitative_flags_are_separate():
+    ev = qualitative.evaluate(qual2(company=True, market=False), D)
+    assert ev["formal"] == {"market_expansion": None, "competitive_advantage": 76}
+    assert "市場の検証が未了" in ev["unevaluated"]["market_expansion"]
+    ev = qualitative.evaluate(qual2(company=False, market=True), D)
+    assert ev["formal"] == {"market_expansion": 60, "competitive_advantage": None}
+
+
+def test_qualitative_invalid_points_are_error_not_corrected():
+    item = qual2()
+    item["competitive_advantage"]["components"]["technology"]["points"] = 13
+    item["competitive_advantage"]["score"] = 77
+    ev = qualitative.evaluate(item, D)
+    assert ev["formal"]["competitive_advantage"] is None
+    assert any("規則外" in e for e in ev["errors"]["competitive_advantage"])
+    assert ev["reference"]["competitive_advantage"] == 76  # 参考点数だけ最も近い許可値（12）で計算
+
+
+def test_qualitative_market_checks():
+    item = qual2()
+    segs = item["market_expansion"]["segments"]
+    segs[0]["sales_share"] = 0.5
+    segs.append({**segs[0], "segment": "s2", "sales_share": 0.3, "market": " 国内 建設"})
+    ev = qualitative.evaluate(item, D)
+    errs = "／".join(ev["errors"]["market_expansion"])
+    assert "構成比の合計 0.800" in errs and "重複" in errs and ev["formal"]["market_expansion"] is None
+    item = qual2()
+    item["market_expansion"].update({"adjustment": 5, "score": 65})
+    ev = qualitative.evaluate(item, D)
+    assert any("調整 +5 の根拠" in e for e in ev["errors"]["market_expansion"]) and ev["formal"]["market_expansion"] is None
+    item["market_expansion"]["adjustment_basis"] = {"reason": "r", "url": "https://example.com/a", "published": "2026-05-10"}
+    assert qualitative.evaluate(item, D)["formal"]["market_expansion"] == 65
+    item["market_expansion"].update({"adjustment": 8, "score": 65})
+    assert qualitative.evaluate(item, D)["formal"]["market_expansion"] is None
+    for period, pub in (("2019-2024", "2025-11-18"), ("2025-2026", "2025-11-18"), ("2025-2030", "unknown"), ("2025-2030", "2022-01-01")):
+        item = qual2()
+        seg = item["market_expansion"]["segments"][0]
+        seg["cagr_period"], seg["source"]["published"] = period, pub
+        assert qualitative.evaluate(item, D)["formal"]["market_expansion"] is None, (period, pub)
+
+
+def test_qualitative_margin_checks():
+    def ev_with(**change):
+        item = qual2()
+        m = item["competitive_advantage"]["components"]["margin_vs_peers"]
+        for k, v in change.items():
+            if k == "peer0":
+                m["peers"][0].update(v)
+            else:
+                m[k] = v
+        return qualitative.evaluate(item, D)
+    assert ev_with(peer0={"margin_type": "net"})["formal"]["competitive_advantage"] is None
+    assert ev_with(peer0={"fiscal_period_end": "2024-12"})["formal"]["competitive_advantage"] is None
+    assert ev_with(peer0={"accounting_standard": "IFRS"})["formal"]["competitive_advantage"] is None
+    assert ev_with(peer0={"accounting_standard": "IFRS"}, standard_note="差は判定に影響しない")["formal"]["competitive_advantage"] == 76
+    assert ev_with(peers=[])["formal"]["competitive_advantage"] is None
+    # 同業中央値 11% との差 -1pt → 15点。25点と書けば計算エラー
+    item = qual2()
+    item["competitive_advantage"]["components"]["margin_vs_peers"]["points"] = 25
+    item["competitive_advantage"]["score"] = 86
+    ev = qualitative.evaluate(item, D)
+    assert ev["formal"]["competitive_advantage"] is None and any("規則では 15" in e for e in ev["errors"]["competitive_advantage"])
+
+
+def test_qualitative_v1_is_reference_only():
+    ev = qualitative.evaluate({**QUAL, "primary_verified": True}, D)
+    assert ev["reference"] == {"market_expansion": 60, "competitive_advantage": 76}
+    assert ev["formal"] == {"market_expansion": None, "competitive_advantage": None}
+
+
+def test_qualitative_import_does_not_need_scenario_research(conn):
+    res = qualitative.import_items(conn, [qual2()], "test", D)
+    assert res[0]["saved"]
+    assert conn.execute("SELECT COUNT(*) FROM assumption_research").fetchone()[0] == 0
+    q = qualitative.scores_for(conn, CODE, D)
+    assert q["formal"] == {"market_expansion": 60, "competitive_advantage": 76} and q["origin"] == "qualitative_v5"
 
 
 def test_v4_scores_untouched_by_v5(conn):
@@ -252,10 +366,18 @@ def test_unverified_qualitative_is_reference_only(conn):
     full_setup(conn, verified=False)
     r = engine.score_one(conn, CODE, D)
     g = json.loads(r["growth_detail"])
-    # 一次情報の裏付け前: 参考点数には含めるが、正式点数では未評価（充足率不足で正式にならない）
+    # 検証前: 参考点数には含めるが、正式点数では未評価（0点にしない。充足率不足で正式にならない）
     assert g["items"]["market_expansion"]["score"] is not None
     assert r["growth_formal"] is None and r["eval_status"] != "formal" and r["buy_decision"] is None
     assert g["formal_if_qualitative_verified"] is not None
+
+
+def test_verified_qualitative_counts_in_formal_growth(conn):
+    quotes(conn, days=1900)
+    full_setup(conn, verified=True)
+    g = json.loads(engine.score_one(conn, CODE, D)["growth_detail"])
+    assert g["qualitative"]["formal"] == {"market_expansion": 60, "competitive_advantage": 76}
+    assert "formal_if_qualitative_verified" not in g
 
 
 def test_per_policy_uses_five_year_median(conn):

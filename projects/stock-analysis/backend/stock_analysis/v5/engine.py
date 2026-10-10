@@ -3,7 +3,8 @@
 正式評価の条件（すべて満たすときだけ正式ランキング・注文候補に使う）:
   成長期待点と売り点数がともに正式（充足率80%以上・必須項目あり）／ 買い点数が調査前提で算定済み ／
   予測信頼度 A または B ／ 評価前提が検証済み（承認済み）／ 想定PER（過去5年中央値）に異常の目印が無い
-定性評価（市場拡大・競争優位）は一次情報での裏付けが済むまで参考点数にだけ使い、正式点数の計算では未評価とする。
+定性評価（市場拡大・競争優位）は検証済み（会社情報・市場・計算の3点、docs/qualitative-v2-spec.md）の項目だけ正式点数に使い、
+それ以外は参考点数にだけ使う（正式点数では未評価。0点にはしない）。
 """
 from __future__ import annotations
 
@@ -89,7 +90,7 @@ def score_one(conn: sqlite3.Connection, code: str, d: date) -> dict[str, Any]:
     f = build(conn, code, d, price, ind)
     sa = research.scenario_assumptions(conn, code, d)
     r = sa["research"] if sa else None
-    qual = qualitative.scores_for(conn, code)
+    qual = qualitative.scores_for(conn, code, d)
 
     # 想定PER（方針B）: 過去5年の実績PERの中央値（弱気=25%点、強気=75%点）。調査PERでの値は比較用に残す
     research_per = sa["assumptions"]["base"].assumed_per if sa else None
@@ -120,12 +121,15 @@ def score_one(conn: sqlite3.Connection, code: str, d: date) -> dict[str, Any]:
     years = years_until(base_a.target_year, d, base_a.fiscal_month_end) if base_a else None
 
     g = growth.score(f, qual, eps_2029, years)
-    if not qual.get("primary_verified"):
-        # 一次情報で裏付けていない定性評価は正式点数に使わない（参考点数には含める）
-        strict = growth.score(f, {**qual, "market_expansion": None, "competitive_advantage": None}, eps_2029, years)
+    qf = qual["formal"]
+    if any(qf[k] != qual.get(k) for k in qf):
+        # 検証済みでない定性項目は正式点数の計算では未評価（参考点数には含める）
+        strict = growth.score(f, {**qual, **qf}, eps_2029, years)
         g["formal_if_qualitative_verified"] = g["formal"]
         g.update({"formal": strict["formal"], "status": strict["status"], "coverage_formal_basis": strict["coverage"],
-                  "qualitative_note": "定性評価は一次情報の裏付け前のため、正式点数では未評価として計算"})
+                  "qualitative_note": "定性評価のうち検証済みでない項目は、正式点数では未評価として計算"})
+    g["qualitative"] = {"reference": {k: qual.get(k) for k in qf}, "formal": qf, "verification": qual["verification"],
+                        "unevaluated": qual["unevaluated"], "errors": qual["errors"], "origin": qual["origin"]}
     s = sell.score(f, base.get("v_over_p"), _growth_drop(conn, code, d, g["reference"]), qual.get("growth_outlook"))
     risks = risk.detect(f)
     diff, hist_match = _cross_check(conn, r, f)

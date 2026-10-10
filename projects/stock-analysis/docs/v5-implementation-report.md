@@ -45,6 +45,11 @@
 | 配当の二重計上防止・増配上限・データなし時 | test_dividend_no_double_count_and_capped_growth、test_dividend_unknown_is_not_added |
 | 信頼度の検証期間不足 | test_confidence_insufficient_history_is_not_zero |
 | 定性評価のルール再計算 | test_qualitative_rule_recomputes_and_flags_mismatch |
+| 定性評価の検証フラグ分離・正式/参考の分離 | test_qualitative_v2_valid_item_is_formal, test_qualitative_flags_are_separate, test_qualitative_v1_is_reference_only, test_verified_qualitative_counts_in_formal_growth |
+| 規則外の点数はエラー（自動補正しない） | test_qualitative_invalid_points_are_error_not_corrected |
+| 市場拡大の検査（構成比合計・予測期間・発表日・重複・調整の根拠） | test_qualitative_market_checks |
+| 同業比利益率の検査（種類・年度・会計基準・同業数・判定） | test_qualitative_margin_checks |
+| 定性評価は調査前提なしで保存でき v4 に影響しない | test_qualitative_import_does_not_need_scenario_research, test_v4_scores_untouched_by_v5 |
 | v4 を変更しない | test_v4_scores_untouched_by_v5 |
 
 ## 実データでの v4/v5 比較（未実施）
@@ -54,5 +59,5 @@
 - 正式な採点方式は v4 のまま。v5 は比較検証用で、自動通知・売買候補・注文計画に使わない。毎日の自動処理での v5 参考採点も既定で停止（`STOCK_V5_SHADOW=1` のときだけ実行）。比較は `compare-v5` で行う。
 - 想定PER（方針B）: 各月末の調整後株価 ÷ その時点で公表済みの直近本決算EPS（分割補正）から過去5年の実績PERを求め、標準=中央値、弱気=25%点、強気=75%点とする。赤字の月は除外。調査PERでの買い点数も比較用に保存。
 - PERの異常の目印（付いた銘柄は正式評価にしない・要確認）: 有効36か月未満／赤字の期間あり／中央値が5倍未満または60倍超／75%点÷25%点が2倍超／営業利益率が5年前の2倍超・半分未満または赤字黒字の転換／売上の年平均成長率25%超／調査の標準PERと±50%超の乖離。
-- 定性評価: 一次情報（決算資料・中期経営計画・有価証券報告書）での裏付けが確認され、取込ファイルで `primary_verified: true` とした銘柄だけ正式点数に使う。それまでは参考点数にだけ含め、正式点数では未評価として計算する。
+- 定性評価（2026-10-10 改定、詳細は [qualitative-v2-spec.md](qualitative-v2-spec.md)）: `primary_verified` の一括管理を廃止し、`company_verified`（競争優位の会社情報）・`market_verified`（市場成長率の出典と対応関係）・`calculation_verified`（アプリの検査に合格、自動判定）の3つに分けた。市場拡大は市場検証＋計算検証、競争優位は会社検証＋計算検証がそろった項目だけ正式点数に使う。そろわない項目は参考点数にだけ含め、正式点数では未評価（0点にしない）。規則外の点数は正式点数ではエラー（自動補正しない）。保存先は v5 専用の `qualitative_v5` 表で、v4 と調査前提（3シナリオ）には触れない。
 - 比較レポートに追加: 充足率（成長・売り）、PER中央値と25〜75%点、調査PERでの買い点数、売却候補の追加／除外、正式評価の銘柄数、「異常な点数変動（±30点以上）・欠損データ・想定外の判定」の一覧。

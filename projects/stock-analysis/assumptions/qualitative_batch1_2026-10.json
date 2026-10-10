@@ -18,7 +18,7 @@
     }
    ],
    "adjustment": 0,
-   "rationale": "領域別売上が未確認のため単一セグメント扱い。市場CAGR19.82%→88点。最速サブ市場への集中の引用根拠なし、縮小ニッチでもないため調整0"
+   "rationale": "領域別売上は開示あり（コマース68%・プロモーション14%・ライブ配信10%・イベント7%）だが、全領域がVTuber IP事業のため単一市場として扱う。市場CAGR19.82%で88点（外部調査）。調整0"
   },
   "competitive_advantage": {
    "score": 74,
@@ -37,7 +37,7 @@
        "margin": 0.143
       }
      ],
-     "url": "https://gamebiz.jp/news/425890"
+     "url": "https://www2.jpx.co.jp/disc/50320/140120260610567133.pdf"
     },
     "technology": {
      "points": 12,
@@ -46,13 +46,13 @@
     },
     "orders_customers": {
      "points": 9,
-     "evidence": "BtoCファン基盤で顧客は分散。4Qはコマース売上前年比-2.2%、スパチャ減少、棚卸評価損約18億円",
-     "url": "https://gamebiz.jp/news/427533"
+     "evidence": "BtoCファン基盤で顧客は分散（ANYCOLOR ID 210万）。4Qは全社売上が前年比-2.2%、コマースは+11.4%、ライブ配信は+4.6%。棚卸評価損約18億円（2026/4期決算説明資料 p.4-7）",
+     "url": "https://www2.jpx.co.jp/disc/50320/140120260610567144.pdf"
     },
     "midterm_plan": {
      "points": 6,
-     "evidence": "中計目標（2027/4期 売上600億円・営業利益240億円）に対し会社予想は営業利益180〜200億円で未達見込み、中計は作り直し中",
-     "url": "https://www.moguravr.com/?p=283986"
+     "evidence": "旧中計（2027/4期 売上600億円・営業利益240億円）は会社予想（営業利益180〜200億円）で未達見込み。2026-06-10に新中計を開示（2029/4期 売上800億円・営業利益260億円）、進捗は未実証",
+     "url": "https://www2.jpx.co.jp/disc/50320/140120260610567144.pdf"
     }
    },
    "rationale": "営業利益率36.2%、カバー14.3%で差+21.9pt。22+25+12+9+6=74"
@@ -62,7 +62,7 @@
    "forecast_dps": 62,
    "forecast_period": "2027年4月期（中間31・期末31）",
    "payout_policy": "配当性向30%以上を目安に安定・継続配当",
-   "source_url": "https://finboard.jp/companies/JP:5032/dividends"
+   "source_url": "https://www2.jpx.co.jp/disc/50320/140120260610567133.pdf"
   },
   "loss_making": false,
   "sources": [
@@ -83,10 +83,9 @@
    }
   ],
   "unverified": [
-   "領域別売上構成比",
-   "VTuber市場の世界シェア",
-   "改定後の中計目標",
-   "カバーの数値は非連結実績"
+   "VTuber市場の世界シェア・順位（一次情報に記載なし）",
+   "市場CAGRは外部調査",
+   "スパチャ単独の増減（領域合計のみ開示）"
   ]
  },
  {
@@ -126,8 +125,8 @@
    "components": {
     "share": {
      "points": 30,
-     "evidence": "テスタ市場シェア約50%（2023年、テラダイン約30%）、ハイエンドSoCで約58%、世界1位",
-     "url": "https://amp.kr-asia.com/this-rising-japanese-chip-stock-has-a-close-correlation-with-nvidia"
+     "evidence": "会社推定の半導体テスタ市場シェア CY25 65%（CY24 58%）、SoCテスタ CY25 66%",
+     "url": "https://www.advantest.com/document/ja/investors/ir-library/result/JE_BIZ_260427_slide.pdf"
     },
     "margin_vs_peers": {
      "points": 25,
@@ -344,7 +343,7 @@
    "rationale": "FPSOが実質単一事業。CAGR8.51%→75点（他社予測5〜11.6%）。調整0"
   },
   "competitive_advantage": {
-   "score": 82,
+   "score": 72,
    "components": {
     "share": {
      "points": 22,
@@ -352,44 +351,45 @@
      "url": "https://growthsharematrix.com/blogs/competitors/modec"
     },
     "margin_vs_peers": {
-     "points": 15,
-     "company_margin": 0.0955,
+     "points": 5,
+     "company_margin": 0.079,
      "peers": [
       {
-       "name": "SBM Offshore（純利益率で代用）",
-       "margin": 0.115
+       "name": "SBM Offshore 2025（Directional純利益率）",
+       "margin": 0.134
       },
       {
-       "name": "Yinson FY26（純利益率で代用）",
+       "name": "Yinson FY2026（PATAMI/売上）",
        "margin": 0.126
       }
      ],
-     "url": "https://www.globenewswire.com/news-release/2026/02/26/3245206/0/en/SBM-Offshore-Full-Year-2025-Earnings.html"
+     "url": "https://www.sbmoffshore.com/wp-content/uploads/2026/02/SBM-Offshore-Full-Year-2025-Earnings.pdf",
+     "evidence": "同じ基準（親会社帰属の純利益率）で比較：自社7.9%（360.7/4,581.2百万ドル）、同業中央値13.0%（差-5.1pt）。旧記載のSBM 11.5%は基準混在の誤り"
     },
     "technology": {
      "points": 20,
-     "evidence": "ブラジル向け最大級FPSOを受注、ブラジルで16基納入（二次情報）",
-     "url": "https://www.seatrade-maritime.com/offshore/modec-to-deliver-largest-fpso-to-brazil"
+     "evidence": "ブラジルで17基目のFPSO（Equinor Bacalhau、2025-10生産開始）。Gato do Mato・Hammerhead受注",
+     "url": "https://www.modec.com/jp/ir/library/presentation/assets/pdf/2025_YE_presentation_jp.pdf"
     },
     "orders_customers": {
      "points": 15,
-     "evidence": "2026年6月末受注残250億ドル（チャーター85億ドル、平均11.4年）、顧客はPetrobras・ExxonMobil等",
-     "url": "https://quartr.com/events/modec-inc-6269-q2-2026_F3BVDeiE"
+     "evidence": "受注残$25.0B（Charter $8.5B、平均残存11.4年。中間期説明資料の定義で、2Q短信の連結受注残は$17.0B）。顧客はPetrobras・ExxonMobil・Equinor・Shell等",
+     "url": "https://www.modec.com/jp/ir/library/presentation/assets/pdf/2026-2Q_ir-presentation_jp.pdf"
     },
     "midterm_plan": {
      "points": 10,
-     "evidence": "中計2024-26の最終目標を2度上方修正、1H26で通期予想の60%を達成",
-     "url": "https://edinetdb.jp/company/E01725/midterm-plans/"
+     "evidence": "中計2024-26の2026年度目標を2025-02に上方修正（純利益$175M→$300M）。2025年度実績$360.7Mで既に超過。1H26は通期予想比60%進捗",
+     "url": "https://www.modec.com/jp/ir/library/presentation/assets/pdf/mtp_2024-2026_jp_rev2025.pdf"
     }
    },
-   "rationale": "22+15+20+15+10=82（同業の営業利益率は取得できず純利益率で比較）"
+   "rationale": "22+5+20+15+10=72（利益率は純利益率で同業と比較）"
   },
   "dividend": {
    "latest_actual_dps": 140,
    "forecast_dps": 200,
    "forecast_period": "2026年12月期",
    "payout_policy": "未確認",
-   "source_url": "https://scouter.monex.co.jp/report/zaimu/6269"
+   "source_url": "https://www.modec.com/jp/ir/library/result/assets/pdf/2026_2Q_tanshin_jp.pdf"
   },
   "loss_making": false,
   "sources": [
@@ -405,19 +405,17 @@
    }
   ],
   "unverified": [
-   "同業の営業利益率",
-   "2025年純利益の実績",
-   "2025年受注残（情報が食い違う）",
-   "配当140円/200円は二次情報",
-   "世界シェア順位は二次情報",
-   "配当方針"
+   "世界シェア順位（一次情報に記載なし）",
+   "同業の営業利益率（取得不可のため純利益率で比較）",
+   "配当の数値方針",
+   "市場CAGRは外部調査"
   ]
  },
  {
   "code": "5801",
   "name": "古河電気工業",
   "market_expansion": {
-   "score": 70,
+   "score": 65,
    "segments": [
     {
      "segment": "インフラ／情報通信（光ファイバ・ケーブル）",
@@ -464,11 +462,11 @@
      "published": "unknown"
     }
    ],
-   "adjustment": 5,
-   "rationale": "加重平均64.5。DC向け超多心ケーブル（最速分野、会社見解で年約20%成長）に寄るため+5→70"
+   "adjustment": 0,
+   "rationale": "加重平均64.5。旧補正+5の根拠（DC向け年約20%成長の会社見解）は会社資料で確認できず調整0"
   },
   "competitive_advantage": {
-   "score": 62,
+   "score": 66,
    "components": {
     "share": {
      "points": 12,
@@ -478,7 +476,7 @@
     "margin_vs_peers": {
      "points": 15,
      "evidence": "営業利益率4.9%、同業中央値9.8%（差-4.9pt、±5pt以内の境界）",
-     "url": "https://www.sbbit.jp/article/st/186518",
+     "url": "https://www.furukawaelectric.com/ir/library/finalreport/pdf/2026/20260512.pdf",
      "company_margin": 0.049,
      "peers": [
       {
@@ -498,27 +496,27 @@
     "technology": {
      "points": 20,
      "evidence": "ハイパースケールDC向け13824心ケーブルを2026年3月に量産開始、空孔コアファイバ開発",
-     "url": "https://businessnetwork.jp/article/33499/"
+     "url": "https://www.furukawaelectric.com/release/2026/comm_20260312.html"
     },
     "orders_customers": {
      "points": 9,
-     "evidence": "DC需要で1Q過去最高、約1,000億円の増産投資。受注残・顧客名は未確認",
-     "url": "https://monoist.itmedia.co.jp/mn/spv/2608/25/news019.html"
+     "evidence": "2027/3期1Qは売上・営業利益ともFY2001以降で最高、約1,000億円の増産投資（顧客の購入コミットメントあり）。受注残・顧客名は非開示",
+     "url": "https://www.furukawaelectric.com/ir/library/finalreport/pdf/2027/20260806_pre.pdf"
     },
     "midterm_plan": {
-     "points": 6,
-     "evidence": "2025年度営業利益638億円は修正予想を上回るが当初中計の達成度は未確認",
-     "url": "https://edinetdb.jp/company/E01332/midterm-plans/"
+     "points": 10,
+     "evidence": "25中計の財務目標7項目をすべて達成（2025年度営業利益639億円、目標580億円以上）。新ビジョン2030は営業利益2,500億円",
+     "url": "https://www.furukawaelectric.com/ir/library/mid_briefing/pdf/2026/20260519_management_pre.pdf"
     }
    },
-   "rationale": "12+15+20+9+6=62"
+   "rationale": "12+15+20+9+10=66"
   },
   "dividend": {
    "latest_actual_dps": 210,
    "forecast_dps": 22,
    "forecast_period": "2027年3月期（1:10分割後。分割前換算220円）",
-   "payout_policy": "未確認",
-   "source_url": "https://finance.limo.media/articles/detail/290/2"
+   "payout_policy": "配当性向30%から株主資本の3.5%目途（DOE）へ変更",
+   "source_url": "https://www.furukawaelectric.com/ir/library/finalreport/pdf/2026/20260512.pdf"
   },
   "loss_making": false,
   "sources": [
@@ -534,12 +532,9 @@
    }
   ],
   "unverified": [
-   "決算短信は未取得、セグメント数値はスニペット",
-   "エネルギーインフラ売上は差額推計",
-   "電装エレクトロニクス売上に食い違い",
-   "光ファイバ世界シェア",
-   "中計の当初目標達成度",
-   "配当方針"
+   "光ファイバの世界シェア・順位",
+   "受注残・顧客名（非開示）",
+   "市場CAGRは外部調査（会社は市場成長率を公表していない）"
   ]
  },
  {
@@ -607,7 +602,7 @@
     "margin_vs_peers": {
      "points": 15,
      "evidence": "営業利益率6.2%、NSK4.3%・NTN3.8%（±5pt以内）",
-     "url": "https://www.minebeamitsumi.com/english/corp/investors/financials/highlights/annual/",
+     "url": "https://www.minebeamitsumi.com/corp/investors/disclosure/financial/p2026/__icsFiles/afieldfile/2026/05/28/e2026_presentation.pdf",
      "company_margin": 0.062,
      "peers": [
       {
@@ -632,8 +627,8 @@
     },
     "midterm_plan": {
      "points": 6,
-     "evidence": "2026/3期営業利益は修正予想超え。2029/3期目標は大型M&A前提、前中計達成度は未確認",
-     "url": "https://www.automation-news.jp/2026/05/104393/"
+     "evidence": "2026/3期営業利益1,040億円は2月予想1,010億円を超過。2029/3期の基本計画は大型M&Aなしで売上1.9兆円・営業利益1,680億円（M&A成功時は2.5兆円・2,500億円の別案）。前中計の達成度は資料に記載なし",
+     "url": "https://www.minebeamitsumi.com/corp/investors/disclosure/financial/p2026/__icsFiles/afieldfile/2026/05/28/e2026_presentation.pdf"
     }
    },
    "rationale": "30+15+20+9+6=80"
@@ -683,7 +678,7 @@
    "rationale": "市場CAGR予測5.4〜9.2%の中間6.9%→60点。HBM・AIメモリ向けMEMSカード（最速分野）に寄るため+5→65"
   },
   "competitive_advantage": {
-   "score": 66,
+   "score": 62,
    "components": {
     "share": {
      "points": 12,
@@ -693,7 +688,7 @@
     "margin_vs_peers": {
      "points": 15,
      "evidence": "営業利益率24.7%、同業中央値21.7%（+3.0pt）",
-     "url": "https://kabuyoho.jp/report?bcode=6855",
+     "url": "https://www.jem-net.co.jp/images/top/pdf/2026/260514_254qtanshin.pdf",
      "company_margin": 0.247,
      "peers": [
       {
@@ -712,28 +707,28 @@
     },
     "technology": {
      "points": 20,
-     "evidence": "メモリ／ロジック向けMEMSプローブカード（Mタイプ）、HBM向けは数量・単価とも高水準",
-     "url": "https://finance.matsui.co.jp/news/578696/index"
+     "evidence": "MEMS技術のMタイプが主力、300mm一括コンタクト・高温プロービングをロジック向けに展開。HBM等の旺盛な需要（短信）",
+     "url": "https://www.jem-net.co.jp/images/top/pdf/2026/260514_chukikeikaku.pdf"
     },
     "orders_customers": {
      "points": 9,
-     "evidence": "Micronグループで約29.5%、ソニー10.4%（集中は中程度）",
-     "url": "https://edinetdb.jp/company/E02043/main-customers"
+     "evidence": "FY3/26有報：マイクロン計30.9%（15.6+15.3）、フラッシュフォワード13.8%で集中度は中程度。受注残11,783百万円（前期比+40.7%）",
+     "url": "https://finance-frontend-pc-dist.west.edge.storage-yahoo.jp/securities-report/20260624/S100YHWG.pdf"
     },
     "midterm_plan": {
-     "points": 10,
-     "evidence": "中計2026年度目標（売上300億円・経常50億円）を前倒しで超過",
-     "url": "https://scouter.monex.co.jp/news/detail/6855_20260807_act_20260807_160033_5"
+     "points": 6,
+     "evidence": "2026年度目標（売上300億円・経常50億円）に対し、FY3/26実績は経常71.8億円で超過、売上293.7億円で未達（2026年度予想330億円で超過見込み）",
+     "url": "https://www.jem-net.co.jp/images/top/pdf/2026/260514_chukikeikaku.pdf"
     }
    },
-   "rationale": "12+15+20+9+10=66"
+   "rationale": "12+15+20+9+6=62"
   },
   "dividend": {
    "latest_actual_dps": 80,
    "forecast_dps": 80,
    "forecast_period": "2027年3月期（5月時点予想）",
    "payout_policy": "安定的・継続的（数値目標なし）",
-   "source_url": "https://strainer.jp/companies/JP-6855/dividends"
+   "source_url": "https://www.jem-net.co.jp/images/top/pdf/2026/260514_254qtanshin.pdf"
   },
   "loss_making": false,
   "sources": [
@@ -749,12 +744,9 @@
    }
   ],
   "unverified": [
-   "プローブカード比率100%は仮定",
-   "世界シェアと順位",
-   "TechnoprobeのEBITマージン",
-   "FY3/27営業利益予想と修正後配当",
-   "FY3/26主要顧客比率",
-   "中計目標の数値"
+   "世界シェアと順位（一次情報に記載なし）",
+   "日本マイクロニクスの利益率は二次情報",
+   "市場CAGRは外部調査（会社見通しは2025年約4,700億円→2030年7,000億円超）"
   ]
  },
  {
@@ -823,12 +815,12 @@
    "rationale": "22.4+13.5+5.5+6.9+3.0=51.2→51。DC光は最速分野だが売上の6%にとどまり調整なし"
   },
   "competitive_advantage": {
-   "score": 86,
+   "score": 90,
    "components": {
     "share": {
      "points": 30,
-     "evidence": "自動車用ワイヤハーネスで推定25%の世界トップシェア（矢崎・Aptivと3強、2022年頃の記事）",
-     "url": "https://newswitch.jp/p/32483"
+     "evidence": "会社はワイヤーハーネスで世界トップシェアと記載（数値25%は第三者推計で一次情報になし）",
+     "url": "https://sumitomoelectric.com/jp/sustainability/integrated/overview-of-business/automotive"
     },
     "margin_vs_peers": {
      "points": 15,
@@ -857,12 +849,12 @@
      "url": "https://newswitch.jp/image/46543"
     },
     "midterm_plan": {
-     "points": 6,
-     "evidence": "FY3/26は過去最高だが旧中計2025の目標と達成状況は未確認",
+     "points": 10,
+     "evidence": "中計2025の目標をすべて超過（売上5兆1,102億円/目標4兆4,000億円、営業利益4,182億円/2,500億円、ROIC・ROE14.7%/8%以上）。中計2028は営業利益6,000億円",
      "url": "https://www2.jpx.co.jp/disc/58020/140120260511523405.pdf"
     }
    },
-   "rationale": "30+15+20+15+6=86"
+   "rationale": "30+15+20+15+10=90"
   },
   "dividend": {
    "latest_actual_dps": 154,
