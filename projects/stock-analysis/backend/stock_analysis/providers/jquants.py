@@ -120,6 +120,12 @@ class JQuantsProvider(Provider):
             })
         return out
 
+    def listed_all(self) -> list[dict[str, Any]]:
+        """全上場銘柄の一覧（新興株の定期選別に使う）。"""
+        return [{"code": from_jquants_code(str(_pick(r, "Code"))), "name": _pick(r, "CoName", "CompanyName"),
+                 "market": _pick(r, "MktNm", "MarketCodeName"), "sector": _pick(r, "S17Nm", "Sector17CodeName")}
+                for r in self._get(PATHS["master"], {})]
+
     def daily_quotes(self, code: str, start: date, end: date) -> list[dict[str, Any]]:
         rows = self._get(PATHS["daily"], {"code": to_jquants_code(code), "from": start.isoformat(), "to": end.isoformat()})
         return [self._bar(r) for r in rows]

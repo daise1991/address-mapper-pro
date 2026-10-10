@@ -6,6 +6,7 @@
   python -m stock_analysis scheduler            15:55〜23:59 の間 N分おきに run-daily を呼ぶ常駐ループ
   python -m stock_analysis backfill --start D --end D [--step 5]  過去スコアの再計算（参考値）
   python -m stock_analysis serve [--host 127.0.0.1 --port 8000]
+  python -m stock_analysis screen-emerging [--date D] [--out F]   新興株の定期選別（報告書のみ。銘柄一覧は変えない）
   python -m stock_analysis run-all [--host 127.0.0.1 --port 8000]   Webアプリ＋スケジューラを1プロセスで常駐（Windows のログオン時起動用）
 """
 from __future__ import annotations
@@ -76,6 +77,16 @@ def scheduler_loop() -> None:
                 log.exception("run_daily で予期しないエラー")
             finally:
                 conn.close()
+        conn = connect()
+        try:  # 月1回の新興株選別（報告書と通知のみ）
+            from .screening import run_monthly
+            r = run_monthly(conn, provider, now)
+            if r:
+                log.info("emerging_screen: %s", r)
+        except Exception:  # noqa: BLE001
+            log.exception("新興株の定期選別で予期しないエラー")
+        finally:
+            conn.close()
         _time.sleep(s.retry_interval_min * 60 if now.time() >= time(16, 0) else 60)
 
 
@@ -137,6 +148,9 @@ def main() -> None:
     cv.add_argument("--out", default=None)
     iq = sub.add_parser("import-qualitative", help="市場拡大・競争優位の調査結果を取り込む（承認済みルールで再計算）")
     iq.add_argument("path")
+    se = sub.add_parser("screen-emerging", help="新興株の定期選別（追加候補・外す候補の報告書を作る。銘柄一覧は変えない）")
+    se.add_argument("--date")
+    se.add_argument("--out", default=None)
     ex = sub.add_parser("explain", help="銘柄の買い点数の計算根拠を表示（例: explain 5711）")
     ex.add_argument("code")
     sub.add_parser("check", help="J-Quants / EDINET の接続チェック（キー設定後に最初に実行）")
@@ -254,6 +268,13 @@ def main() -> None:
                 print(f"   - 正式は未評価（{k}）: {why}")
             for i in r["issues"]:
                 print(f"   ! {i}")
+    elif args.cmd == "screen-emerging":
+        from .screening import run_and_save
+        conn = connect()
+        d0 = date.fromisoformat(args.date) if args.date else datetime.now(JST).date()
+        rep, path = run_and_save(conn, make_provider(), d0, args.out)
+        print(f"{rep['universe']}社を選別：条件を満たした {rep['passed']}社、追加候補 {len(rep['add'])}社、外す候補 {len(rep['drop'])}社")
+        print(f"報告書: {path}（追加・削除は承認後に行います）")
     elif args.cmd == "explain":
         from .checks import explain
         print("\n".join(explain(connect(), args.code.upper())))
