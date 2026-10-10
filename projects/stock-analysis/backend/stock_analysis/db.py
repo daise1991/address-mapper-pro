@@ -274,7 +274,7 @@ def connect(path: Path | str | None = None) -> sqlite3.Connection:
 
 # 既存DBに後から追加した列（CREATE TABLE IF NOT EXISTS では追加されないため）
 MIGRATIONS = [("scores", "method_version", "TEXT"), ("financials", "forecast_fy_end", "TEXT"),
-              ("verifications", "max_drawdown", "REAL")]
+              ("verifications", "max_drawdown", "REAL"), ("securities", "sector", "TEXT")]
 
 
 def _migrate(conn: sqlite3.Connection) -> None:
@@ -285,7 +285,9 @@ def _migrate(conn: sqlite3.Connection) -> None:
     # 計算方式変更前の採点結果の保管先（scores と同じ列＋保管日時）
     conn.execute("CREATE TABLE IF NOT EXISTS scores_archive AS SELECT *, '' AS archived_at FROM scores WHERE 0")
     from . import research  # 循環 import を避けるため関数内で読み込む
+    from .v5 import engine as v5_engine
     research.ensure_schema(conn)
+    v5_engine.ensure_schema(conn)
     conn.commit()
 
 

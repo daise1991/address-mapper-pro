@@ -59,6 +59,9 @@ CREATE TABLE IF NOT EXISTS assumption_research_history (
 
 def ensure_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(assumption_research)")}
+    if "qualitative" not in cols:  # v5: 市場拡大・競争優位の評価（構成要素と再計算結果）
+        conn.execute("ALTER TABLE assumption_research ADD COLUMN qualitative TEXT")
 
 
 def _history(conn: sqlite3.Connection, code: str, event: str, payload: Any) -> None:
@@ -162,7 +165,7 @@ def get(conn: sqlite3.Connection, code: str) -> dict[str, Any] | None:
     if not r:
         return None
     out = dict(r)
-    for k in ("scenarios", "detail", "sources", "unverified", "review_reasons"):
+    for k in ("scenarios", "detail", "sources", "unverified", "review_reasons", "qualitative"):
         out[k] = json.loads(out[k]) if out.get(k) else None
     out["status_label"] = STATUS_LABELS.get(out["status"], out["status"])
     return out

@@ -58,8 +58,8 @@ def verify_listings(conn: sqlite3.Connection, provider: Provider, codes: list[st
     ts = now_iso()
     for r in info:
         conn.execute(
-            "UPDATE securities SET listing_status=?, verified_at=?, verify_source=? WHERE code=?",
-            ("listed" if r["listed"] else "delisted", ts, provider.name, r["code"]),
+            "UPDATE securities SET listing_status=?, verified_at=?, verify_source=?, sector=COALESCE(?, sector) WHERE code=?",
+            ("listed" if r["listed"] else "delisted", ts, provider.name, r.get("sector"), r["code"]),
         )
     log_fetch(conn, run_id, provider.name, "listed_info", "ok", f"{len(info)} codes")
     conn.commit()

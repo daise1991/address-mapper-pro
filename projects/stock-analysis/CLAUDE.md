@@ -26,7 +26,10 @@
 - APIキーなどの秘密情報を画面やチャットに出さない。
 - 結果は、専門用語を避けて短く報告する。
 
-## 現在の作業（2026-10-10 時点）
-1. `git pull` → `rescore` を実行し、`explain 7012` と `explain 5803` で売り点数の内訳を確認する。株式分割を増資と誤判定していた不具合の修正確認で、「増資・希薄化」が0付近になっていれば修正できている。
-2. `import-research ..\assumptions\batch1_2026-10.json` の出力にある `= 一致` / `= 要確認` を利用者に報告する（調査値と J-Quants 公式データの照合）。
-3. 想定PERの方針（A: 調査値のまま／B: 過去5年PERの中央値）を利用者に確認し、残り50銘柄の調査に進む。
+## 現在の作業（2026-10-10 時点・v5 比較検証）
+v5 は比較検証用の参考採点です。正式な採点方式（v4）の切り替えは、利用者の承認後に行います。
+1. 最新版を取得する（README の手順）。そのあと `npm run build` で画面を作り直す。
+2. `.venv\Scripts\python -m stock_analysis import-qualitative ..\assumptions\qualitative_batch1_2026-10.json` を実行する（市場拡大・競争優位の取込）。
+3. `.venv\Scripts\python -m stock_analysis compare-v5` を実行し、出力（data\compare_v4_v5_日付.md）を利用者に報告する。
+4. `.venv\Scripts\python -m stock_analysis explain 7012` で、株式分割の誤判定がないか（増資・希薄化≒0）を確認する。
+5. `.venv\Scripts\python -m pytest -q` の結果を報告する。

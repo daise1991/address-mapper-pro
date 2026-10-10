@@ -31,7 +31,9 @@ def _price_on_or_after(conn: sqlite3.Connection, code: str, after: str, offset: 
 
 def compute_forward_returns(conn: sqlite3.Connection, horizons: tuple[int, ...] = HORIZONS) -> int:
     n = 0
-    for s in conn.execute("SELECT run_date, code FROM scores WHERE price IS NOT NULL").fetchall():
+    # 株価だけで決まるため v4・v5 共通（どちらかに採点がある日を対象）
+    for s in conn.execute("""SELECT run_date, code FROM scores WHERE price IS NOT NULL
+                             UNION SELECT run_date, code FROM scores_v5 WHERE price IS NOT NULL""").fetchall():
         entry = conn.execute("SELECT COALESCE(adj_close, close) AS c FROM daily_quotes WHERE code=? AND date=?",
                              (s["code"], s["run_date"])).fetchone()
         if not entry or not entry["c"]:
@@ -99,11 +101,24 @@ def _bench_close(conn: sqlite3.Connection, name: str, d: str) -> float | None:
     return r["c"] if r else None
 
 
+V5_SELECT = """SELECT s.run_date, s.code, s.price, s.created_at, s.method_version,
+       s.growth_reference AS growth_score, s.growth_formal, s.buy_score, s.buy_score_k150,
+       s.sell_reference AS sell_score, s.sell_formal, s.buy_decision, s.sell_decision, s.exit_type,
+       s.confidence, s.eval_status, s.reevaluate,
+       json_extract(s.buy_detail, '$.base.v_over_p') AS v_over_p"""
+
+
 def _load(conn: sqlite3.Connection, horizon: int, live_only: bool, benchmark: str = "universe",
-          method_version: str | None = None) -> list[dict[str, Any]]:
-    sql = """SELECT s.*, v.forward_return, v.exit_date, v.max_drawdown, json_extract(s.buy_detail, '$.v_over_p') AS v_over_p
+          method_version: str | None = None, source: str = "v4") -> list[dict[str, Any]]:
+    if source == "v5":
+        sql = V5_SELECT + """, v.forward_return, v.exit_date, v.max_drawdown, sec.sector
+             FROM scores_v5 s JOIN verifications v ON v.score_date=s.run_date AND v.code=s.code AND v.horizon=?
+             LEFT JOIN securities sec ON sec.code=s.code WHERE 1=1"""
+    else:
+        sql = """SELECT s.*, v.forward_return, v.exit_date, v.max_drawdown, sec.sector,
+                        json_extract(s.buy_detail, '$.v_over_p') AS v_over_p
              FROM scores s JOIN verifications v ON v.score_date=s.run_date AND v.code=s.code AND v.horizon=?
-             WHERE 1=1"""
+             LEFT JOIN securities sec ON sec.code=s.code WHERE 1=1"""
     params: list[Any] = [horizon]
     if live_only:
         sql += " AND substr(s.created_at,1,10)=s.run_date"
@@ -168,6 +183,9 @@ def rule_signals(r: RuleSet) -> dict[str, tuple[Callable[[dict[str, Any]], bool]
         "通常購入以上(k=150 比較)": (normal(k150_buy), False),
         "購入条件確認(65-74)": (lambda x: x["buy_decision"] == "check", False),
         "割安待ち": (lambda x: x["buy_decision"] == "wait_discount", False),
+        "成長期待80点以上": (lambda x: (x["growth_score"] or 0) >= 80, False),
+        "売り75点以上": (lambda x: (x["sell_score"] or 0) >= 75, True),
+        "売り85点以上": (lambda x: (x["sell_score"] or 0) >= 85, True),
         "売却優先検討(85+)": (lambda x: x["sell_decision"] == "priority", True),
         "売却候補(75-84)": (lambda x: x["sell_decision"] == "candidate", True),
         "一部売却検討(65-74)": (lambda x: x["sell_decision"] == "partial", True),
@@ -177,8 +195,11 @@ def rule_signals(r: RuleSet) -> dict[str, tuple[Callable[[dict[str, Any]], bool]
 
 
 def summary(conn: sqlite3.Connection, horizon: int = 60, live_only: bool = False, rules: RuleSet = RuleSet(),
-            benchmark: str = "universe", method_version: str | None = None) -> dict[str, Any]:
-    rows = _load(conn, horizon, live_only, benchmark, method_version)
+            benchmark: str = "universe", method_version: str | None = None, source: str = "v4") -> dict[str, Any]:
+    rows = _load(conn, horizon, live_only, benchmark, method_version, source)
+    sectors: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for r in rows:
+        sectors[r.get("sector") or "業種未取得"].append(r)
     buckets: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for r in rows:
         b = r["buy_score"]
@@ -193,7 +214,8 @@ def summary(conn: sqlite3.Connection, horizon: int = 60, live_only: bool = False
         "benchmark": benchmark,
         "benchmark_label": BENCHMARKS.get(benchmark, benchmark),
         "method_version": method_version,
-        "versions": [r[0] for r in conn.execute("SELECT DISTINCT method_version FROM scores WHERE method_version IS NOT NULL")],
+        "versions": [r[0] for r in conn.execute(
+            f"SELECT DISTINCT method_version FROM {'scores_v5' if source == 'v5' else 'scores'} WHERE method_version IS NOT NULL")],
         "n": len(rows),
         "ic": {
             "buy": spearman([r["buy_score"] for r in rated], [r["forward_return"] for r in rated]),
@@ -204,6 +226,8 @@ def summary(conn: sqlite3.Connection, horizon: int = 60, live_only: bool = False
         },
         "buy_buckets": {k: _stats(v) for k, v in sorted(buckets.items())},
         "rules": {name: _stats([r for r in rows if f(r)], sell_side) for name, (f, sell_side) in rule_signals(rules).items()},
+        "sectors": {k: _stats(v) for k, v in sorted(sectors.items())},
+        "source": source,
         "disclaimer": "検証で有効性が確認されるまで、点数は投資成果を保証する指標ではありません。",
         "note": "後から再計算した分（backfill）は評価前提が現在の値のため先読みバイアスを含む。当日保存分のみ（live_only）が本来の検証値。"
                 "超過リターン・的中率は比較対象に対する値。",

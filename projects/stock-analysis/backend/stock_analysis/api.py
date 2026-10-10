@@ -379,10 +379,21 @@ def put_weights(body: WeightsIn, db: sqlite3.Connection = Depends(get_db)) -> di
 
 @app.get("/api/verification")
 def get_verification(horizon: int = 60, live_only: bool = False, benchmark: str = "universe",
-                     method_version: str | None = None, db: sqlite3.Connection = Depends(get_db)) -> dict[str, Any]:
-    if benchmark not in BENCHMARKS:
-        raise HTTPException(400, "benchmark が不正")
-    return summary(db, horizon, live_only, load_rules(db), benchmark, method_version)
+                     method_version: str | None = None, source: str = "v4",
+                     db: sqlite3.Connection = Depends(get_db)) -> dict[str, Any]:
+    if benchmark not in BENCHMARKS or source not in ("v4", "v5"):
+        raise HTTPException(400, "benchmark または source が不正")
+    return summary(db, horizon, live_only, load_rules(db), benchmark, method_version, source)
+
+
+@app.get("/api/v5/compare")
+def v5_compare(run_date: str | None = None, db: sqlite3.Connection = Depends(get_db)) -> dict[str, Any]:
+    """同じ日の v4（正式）と v5（比較検証用の参考採点）の比較。"""
+    from .v5 import compare as v5compare
+    d0 = run_date or db.execute("SELECT MAX(run_date) FROM scores_v5").fetchone()[0]
+    if not d0:
+        return {"date": None, "items": [], "message": "v5 の採点がまだありません（v5-run を実行してください）"}
+    return v5compare.compare(db, datetime.fromisoformat(d0).date())
 
 
 @app.get("/api/verification/report")

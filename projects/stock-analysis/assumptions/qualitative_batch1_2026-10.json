@@ -1,0 +1,1128 @@
+[
+ {
+  "code": "5032",
+  "name": "ANYCOLOR",
+  "market_expansion": {
+   "score": 88,
+   "segments": [
+    {
+     "segment": "VTuber IP事業（にじさんじ：コマース・配信・イベント・プロモーション一体）",
+     "sales_share": 1.0,
+     "market": "世界VTuber市場",
+     "cagr": 0.1982,
+     "cagr_period": "2024-2030",
+     "base_points": 88,
+     "source": "QYResearch Vtuber Global Market 2024-2030（GII）",
+     "url": "https://gii.tw/report/qyr1559192-vtuber-virtual-youtuber-global-market-share.html",
+     "published": "unknown"
+    }
+   ],
+   "adjustment": 0,
+   "rationale": "領域別売上が未確認のため単一セグメント扱い。市場CAGR19.82%→88点。最速サブ市場への集中の引用根拠なし、縮小ニッチでもないため調整0"
+  },
+  "competitive_advantage": {
+   "score": 74,
+   "components": {
+    "share": {
+     "points": 22,
+     "evidence": "2026/4期売上約557億円でカバー（493億円）を上回る上場2強の一角。世界シェア30%以上の資料はなくtop-3扱い",
+     "url": "https://gamebiz.jp/news/427533"
+    },
+    "margin_vs_peers": {
+     "points": 25,
+     "company_margin": 0.362,
+     "peers": [
+      {
+       "name": "カバー(5253) 2026/3期",
+       "margin": 0.143
+      }
+     ],
+     "url": "https://gamebiz.jp/news/425890"
+    },
+    "technology": {
+     "points": 12,
+     "evidence": "IP運営とグッズ・イベントの収益化力が強み。技術面の優位は確認できず中程度",
+     "url": "https://gamebiz.jp/news/432607"
+    },
+    "orders_customers": {
+     "points": 9,
+     "evidence": "BtoCファン基盤で顧客は分散。4Qはコマース売上前年比-2.2%、スパチャ減少、棚卸評価損約18億円",
+     "url": "https://gamebiz.jp/news/427533"
+    },
+    "midterm_plan": {
+     "points": 6,
+     "evidence": "中計目標（2027/4期 売上600億円・営業利益240億円）に対し会社予想は営業利益180〜200億円で未達見込み、中計は作り直し中",
+     "url": "https://www.moguravr.com/?p=283986"
+    }
+   },
+   "rationale": "営業利益率36.2%、カバー14.3%で差+21.9pt。22+25+12+9+6=74"
+  },
+  "dividend": {
+   "latest_actual_dps": 75,
+   "forecast_dps": 62,
+   "forecast_period": "2027年4月期（中間31・期末31）",
+   "payout_policy": "配当性向30%以上を目安に安定・継続配当",
+   "source_url": "https://finboard.jp/companies/JP:5032/dividends"
+  },
+  "loss_making": false,
+  "sources": [
+   {
+    "title": "ANYCOLOR 26年4月期決算（gamebiz）",
+    "url": "https://gamebiz.jp/news/427533",
+    "published": "2026-06"
+   },
+   {
+    "title": "カバー 26年3月期決算（gamebiz）",
+    "url": "https://gamebiz.jp/news/425890",
+    "published": "2026-05"
+   },
+   {
+    "title": "ANYCOLOR 配当（finboard）",
+    "url": "https://finboard.jp/companies/JP:5032/dividends",
+    "published": "2026-06"
+   }
+  ],
+  "unverified": [
+   "領域別売上構成比",
+   "VTuber市場の世界シェア",
+   "改定後の中計目標",
+   "カバーの数値は非連結実績"
+  ]
+ },
+ {
+  "code": "6857",
+  "name": "アドバンテスト",
+  "market_expansion": {
+   "score": 80,
+   "segments": [
+    {
+     "segment": "テストシステム事業（SoC・メモリ・その他）",
+     "sales_share": 0.903,
+     "market": "半導体ATE",
+     "cagr": 0.073,
+     "cagr_period": "2024-2031",
+     "base_points": 75,
+     "source": "Global Info Research Semiconductor ATE market（検索要約）",
+     "url": "https://markets.sharefair.com/en/detail/LP091290948DTW-Global-Semiconductor-Automated-Test-Equipment-ATE-Market-Growth-2024-2030",
+     "published": "unknown"
+    },
+    {
+     "segment": "サービス他",
+     "sales_share": 0.097,
+     "market": "半導体ATE（代替指標）",
+     "cagr": 0.073,
+     "cagr_period": "2024-2031",
+     "base_points": 75,
+     "source": "同上（代替）",
+     "url": "https://the-shashi.com/tse/6857/segment/",
+     "published": "unknown"
+    }
+   ],
+   "adjustment": 5,
+   "rationale": "0.903×75+0.097×75=75。AI/HPC向け高性能SoC・HBM/DRAMテスタが成長をけん引し、最速サブ市場に集中→+5で80"
+  },
+  "competitive_advantage": {
+   "score": 94,
+   "components": {
+    "share": {
+     "points": 30,
+     "evidence": "テスタ市場シェア約50%（2023年、テラダイン約30%）、ハイエンドSoCで約58%、世界1位",
+     "url": "https://amp.kr-asia.com/this-rising-japanese-chip-stock-has-a-close-correlation-with-nvidia"
+    },
+    "margin_vs_peers": {
+     "points": 25,
+     "company_margin": 0.442,
+     "peers": [
+      {
+       "name": "Teradyne FY2025",
+       "margin": 0.204
+      },
+      {
+       "name": "FormFactor FY2025",
+       "margin": 0.073
+      },
+      {
+       "name": "Cohu FY2025",
+       "margin": null
+      }
+     ],
+     "url": "https://www.diamond.co.jp/zai/articles/-/634"
+    },
+    "technology": {
+     "points": 20,
+     "evidence": "SoCテスタ売上 2026/3期7,674億円（前期4,404億円）。AI向け高性能半導体用テスタが伸長",
+     "url": "https://www.moneypost.jp/1418239"
+    },
+    "orders_customers": {
+     "points": 9,
+     "evidence": "1Q売上・営業利益が四半期過去最高、通期上方修正。受注残は未確認、AI顧客集中リスクあり中程度",
+     "url": "https://scouter.monex.co.jp/news/detail/6857_20260729_act_20260729_153012_6"
+    },
+    "midterm_plan": {
+     "points": 10,
+     "evidence": "MTP3を2025年10月に上方修正（EPS284〜341円）し、2026/3期実績EPS515円で大幅超過",
+     "url": "https://www.advantest.com/ja/news/2025/g2l53r0000000obg-att/J_Info_20251028_01.pdf"
+    }
+   },
+   "rationale": "営業利益率44.2%、同業中央値7.3%で+36.9pt。30+25+20+9+10=94"
+  },
+  "dividend": {
+   "latest_actual_dps": 59,
+   "forecast_dps": null,
+   "forecast_period": "2027年3月期（未定）",
+   "payout_policy": "未確認",
+   "source_url": "https://www.advantest.com/en/news/2026/qnpuno0000000cr7-att/E_FR_FY2026_1Q.pdf"
+  },
+  "loss_making": false,
+  "sources": [
+   {
+    "title": "アドバンテスト 26年3月期決算（マネーポスト）",
+    "url": "https://www.moneypost.jp/1418239",
+    "published": "2026-04"
+   },
+   {
+    "title": "Teradyne FY2025 results",
+    "url": "https://www.businesswire.com/news/home/20260202176532/en/Teradyne-Reports-Fourth-Quarter-and-Full-Year-2025-Results",
+    "published": "2026-02"
+   },
+   {
+    "title": "FormFactor Q4 2025 results",
+    "url": "https://investors.formfactor.com/news-releases/news-release-details/formfactor-inc-reports-2025-fourth-quarter-results/",
+    "published": "2026-02"
+   }
+  ],
+  "unverified": [
+   "受注高・受注残",
+   "Cohuの営業利益率",
+   "サービス市場の固有CAGR（ATE市場で代用）",
+   "配当方針と2027/3期配当予想",
+   "ATE市場CAGRはレポートにより3.2〜7.2%（3.2%なら40点）"
+  ]
+ },
+ {
+  "code": "3176",
+  "name": "三洋貿易",
+  "market_expansion": {
+   "score": 60,
+   "segments": [
+    {
+     "segment": "ファインケミカル（ゴム・化学品）",
+     "sales_share": 0.319,
+     "market": "合成ゴム世界市場",
+     "cagr": 0.0421,
+     "cagr_period": "2025-2030",
+     "base_points": 60,
+     "source": "Mordor Intelligence Synthetic Rubber Market",
+     "url": "https://www.researchandmarkets.com/reports/4515092/synthetic-rubber-market-share-analysis",
+     "published": "2025-05"
+    },
+    {
+     "segment": "インダストリアル・プロダクツ（自動車内装材・機械）",
+     "sales_share": 0.287,
+     "market": "自動車シート世界市場",
+     "cagr": 0.063,
+     "cagr_period": "2026-2030",
+     "base_points": 60,
+     "source": "The Business Research Company Automotive Seats 2026",
+     "url": "https://www.gii.co.jp/report/tbrc1641592-automotive-seats-global-market-report.html",
+     "published": "2026"
+    },
+    {
+     "segment": "サステナビリティ（バイオマス・地熱・洋上風力等）",
+     "sales_share": 0.102,
+     "market": "バイオマス発電世界市場",
+     "cagr": 0.043,
+     "cagr_period": "2024-2030",
+     "base_points": 60,
+     "source": "ResearchAndMarkets Biomass Power Generation 2025",
+     "url": "https://www.businesswire.com/news/home/20251121409427/en",
+     "published": "2025-11"
+    },
+    {
+     "segment": "ライフサイエンス（科学機器）",
+     "sales_share": 0.291,
+     "market": "分析機器世界市場",
+     "cagr": 0.057,
+     "cagr_period": "2025-2035",
+     "base_points": 60,
+     "source": "Global Market Insights Analytical Instrumentation",
+     "url": "https://www.gii.tw/report/gmi1892898-analytical-instrumentation-market-opportunity.html",
+     "published": "unknown"
+    }
+   ],
+   "adjustment": 0,
+   "rationale": "全セグメントの市場CAGRが3〜7%で60点。サステナビリティは+38%成長だが規模が小さく調整0"
+  },
+  "competitive_advantage": {
+   "score": 47,
+   "components": {
+    "share": {
+     "points": 5,
+     "evidence": "1952年に国内初の合成ゴム輸入、国内ゴムメーカーをほぼ網羅するがシェア数値は未確認",
+     "url": "https://www2.jpx.co.jp/disc/31760/140120210524426611.pdf"
+    },
+    "margin_vs_peers": {
+     "points": 15,
+     "company_margin": 0.0485,
+     "peers": [
+      {
+       "name": "長瀬産業 2026/3期",
+       "margin": 0.046
+      },
+      {
+       "name": "稲畑産業 2026/3期（未確認）",
+       "margin": 0.0315
+      }
+     ],
+     "url": "https://edinetdb.jp/company/E02552/earnings/FY2026"
+    },
+    "technology": {
+     "points": 12,
+     "evidence": "技術系営業による技術支援・共同開発、CHEMBASE。専門商社で自社技術は中程度",
+     "url": "https://www.sanyo-trading.co.jp/stc/wp-content/uploads/2023/11/Chembase_pressrelease.pdf"
+    },
+    "orders_customers": {
+     "points": 9,
+     "evidence": "主要ゴム・タイヤメーカーをほぼ網羅し顧客は分散、受注残の開示なし",
+     "url": "https://www2.jpx.co.jp/disc/31760/140120210524426611.pdf"
+    },
+    "midterm_plan": {
+     "points": 6,
+     "evidence": "SV2028（営業利益90億円）。2025/9期は期初予想に未達、2026/9期は上期利益率が目標超→部分達成",
+     "url": "https://www2.jpx.co.jp/disc/31760/140120260518539238.pdf"
+    }
+   },
+   "rationale": "5+15+12+9+6=47"
+  },
+  "dividend": {
+   "latest_actual_dps": null,
+   "forecast_dps": 40,
+   "forecast_period": "2026年9月期（分割後基準、記念配当10円含む）",
+   "payout_policy": "配当性向30%以上を目途に累進配当",
+   "source_url": "https://www2.jpx.co.jp/disc/31760/081220260806513235_tse-qcedjpsm-31760-20260807331760-ixbrl.htm"
+  },
+  "loss_making": false,
+  "sources": [
+   {
+    "title": "2025年9月期 決算短信",
+    "url": "https://www2.jpx.co.jp/disc/31760/081220251110593829_tse-acedjpsm-31760-20251110331760-ixbrl.htm",
+    "published": "2025-11"
+   },
+   {
+    "title": "2026年9月期 2Q決算説明資料",
+    "url": "https://www2.jpx.co.jp/disc/31760/140120260518539238.pdf",
+    "published": "2026-05"
+   }
+  ],
+  "unverified": [
+   "インダストリアル売上は残差",
+   "2025/9期の年間配当",
+   "予想配当40円は分割後換算",
+   "稲畑産業の数値",
+   "一部市場CAGRの期間ずれ"
+  ]
+ },
+ {
+  "code": "6269",
+  "name": "三井海洋開発",
+  "market_expansion": {
+   "score": 75,
+   "segments": [
+    {
+     "segment": "FPSO/FSO EPCI＋リース・O&M",
+     "sales_share": 1.0,
+     "market": "FPSO世界市場",
+     "cagr": 0.0851,
+     "cagr_period": "2025-2030",
+     "base_points": 75,
+     "source": "Mordor Intelligence FPSO Market",
+     "url": "https://cn.gii.tw/report/moi1640476-fpso-market-share-analysis-industry-trends.html",
+     "published": "unknown"
+    }
+   ],
+   "adjustment": 0,
+   "rationale": "FPSOが実質単一事業。CAGR8.51%→75点（他社予測5〜11.6%）。調整0"
+  },
+  "competitive_advantage": {
+   "score": 82,
+   "components": {
+    "share": {
+     "points": 22,
+     "evidence": "世界第2位のFPSOコントラクター（二次情報）、リースFPSOでは首位とされる",
+     "url": "https://growthsharematrix.com/blogs/competitors/modec"
+    },
+    "margin_vs_peers": {
+     "points": 15,
+     "company_margin": 0.0955,
+     "peers": [
+      {
+       "name": "SBM Offshore（純利益率で代用）",
+       "margin": 0.115
+      },
+      {
+       "name": "Yinson FY26（純利益率で代用）",
+       "margin": 0.126
+      }
+     ],
+     "url": "https://www.globenewswire.com/news-release/2026/02/26/3245206/0/en/SBM-Offshore-Full-Year-2025-Earnings.html"
+    },
+    "technology": {
+     "points": 20,
+     "evidence": "ブラジル向け最大級FPSOを受注、ブラジルで16基納入（二次情報）",
+     "url": "https://www.seatrade-maritime.com/offshore/modec-to-deliver-largest-fpso-to-brazil"
+    },
+    "orders_customers": {
+     "points": 15,
+     "evidence": "2026年6月末受注残250億ドル（チャーター85億ドル、平均11.4年）、顧客はPetrobras・ExxonMobil等",
+     "url": "https://quartr.com/events/modec-inc-6269-q2-2026_F3BVDeiE"
+    },
+    "midterm_plan": {
+     "points": 10,
+     "evidence": "中計2024-26の最終目標を2度上方修正、1H26で通期予想の60%を達成",
+     "url": "https://edinetdb.jp/company/E01725/midterm-plans/"
+    }
+   },
+   "rationale": "22+15+20+15+10=82（同業の営業利益率は取得できず純利益率で比較）"
+  },
+  "dividend": {
+   "latest_actual_dps": 140,
+   "forecast_dps": 200,
+   "forecast_period": "2026年12月期",
+   "payout_policy": "未確認",
+   "source_url": "https://scouter.monex.co.jp/report/zaimu/6269"
+  },
+  "loss_making": false,
+  "sources": [
+   {
+    "title": "MODEC Q2 2026 earnings summary",
+    "url": "https://quartr.com/events/modec-inc-6269-q2-2026_F3BVDeiE",
+    "published": "2026-08"
+   },
+   {
+    "title": "SBM Offshore Full Year 2025 Earnings",
+    "url": "https://www.globenewswire.com/news-release/2026/02/26/3245206/0/en/SBM-Offshore-Full-Year-2025-Earnings.html",
+    "published": "2026-02"
+   }
+  ],
+  "unverified": [
+   "同業の営業利益率",
+   "2025年純利益の実績",
+   "2025年受注残（情報が食い違う）",
+   "配当140円/200円は二次情報",
+   "世界シェア順位は二次情報",
+   "配当方針"
+  ]
+ },
+ {
+  "code": "5801",
+  "name": "古河電気工業",
+  "market_expansion": {
+   "score": 70,
+   "segments": [
+    {
+     "segment": "インフラ／情報通信（光ファイバ・ケーブル）",
+     "sales_share": 0.175,
+     "market": "光ファイバケーブル",
+     "cagr": 0.1046,
+     "cagr_period": "2025-2030",
+     "base_points": 75,
+     "source": "Mordor Intelligence（Barchart経由）",
+     "url": "https://www.barchart.com/story/news/35087018/fiber-optic-cable-market-expected-to-reach-usd-20-94-billion-by-2030-driven-by-high-speed-internet-and-5g-deployments",
+     "published": "unknown"
+    },
+    {
+     "segment": "インフラ／エネルギー（電力・海底ケーブル）",
+     "sales_share": 0.108,
+     "market": "海底ケーブル",
+     "cagr": 0.059,
+     "cagr_period": "2023-2030",
+     "base_points": 60,
+     "source": "ResearchAndMarkets Submarine Cables",
+     "url": "https://www.globenewswire.com/news-release/2023/08/03/2717703/28124/en/",
+     "published": "2023-08"
+    },
+    {
+     "segment": "電装エレクトロニクス（自動車部品・電装材料）",
+     "sales_share": 0.585,
+     "market": "自動車用ワイヤハーネス",
+     "cagr": 0.045,
+     "cagr_period": "2025-2030",
+     "base_points": 60,
+     "source": "The Business Research Company",
+     "url": "https://www.wboc.com/online_features/press_releases/automotive-wiring-harness-market-anticipated-to-grow-at-4-5-cagr-through-2030-industry-report/article_ce28b0fa-f6fa-5a5e-8a99-97121384c47a.html",
+     "published": "2026-06"
+    },
+    {
+     "segment": "機能製品（半導体テープ等）",
+     "sales_share": 0.123,
+     "market": "半導体テープ",
+     "cagr": 0.073,
+     "cagr_period": "2024-2030",
+     "base_points": 75,
+     "source": "Lucintel",
+     "url": "https://lucintel.com/semiconductor-tape-market.aspx",
+     "published": "unknown"
+    }
+   ],
+   "adjustment": 5,
+   "rationale": "加重平均64.5。DC向け超多心ケーブル（最速分野、会社見解で年約20%成長）に寄るため+5→70"
+  },
+  "competitive_advantage": {
+   "score": 62,
+   "components": {
+    "share": {
+     "points": 12,
+     "evidence": "光ファイバで世界トップクラスとされるが順位・シェアの数値は未確認→top-10扱い",
+     "url": "https://www.geekly.co.jp/companys/data/4302/"
+    },
+    "margin_vs_peers": {
+     "points": 15,
+     "evidence": "営業利益率4.9%、同業中央値9.8%（差-4.9pt、±5pt以内の境界）",
+     "url": "https://www.sbbit.jp/article/st/186518",
+     "company_margin": 0.049,
+     "peers": [
+      {
+       "name": "フジクラ",
+       "margin": 0.16
+      },
+      {
+       "name": "SWCC",
+       "margin": 0.098
+      },
+      {
+       "name": "住友電工",
+       "margin": 0.082
+      }
+     ]
+    },
+    "technology": {
+     "points": 20,
+     "evidence": "ハイパースケールDC向け13824心ケーブルを2026年3月に量産開始、空孔コアファイバ開発",
+     "url": "https://businessnetwork.jp/article/33499/"
+    },
+    "orders_customers": {
+     "points": 9,
+     "evidence": "DC需要で1Q過去最高、約1,000億円の増産投資。受注残・顧客名は未確認",
+     "url": "https://monoist.itmedia.co.jp/mn/spv/2608/25/news019.html"
+    },
+    "midterm_plan": {
+     "points": 6,
+     "evidence": "2025年度営業利益638億円は修正予想を上回るが当初中計の達成度は未確認",
+     "url": "https://edinetdb.jp/company/E01332/midterm-plans/"
+    }
+   },
+   "rationale": "12+15+20+9+6=62"
+  },
+  "dividend": {
+   "latest_actual_dps": 210,
+   "forecast_dps": 22,
+   "forecast_period": "2027年3月期（1:10分割後。分割前換算220円）",
+   "payout_policy": "未確認",
+   "source_url": "https://finance.limo.media/articles/detail/290/2"
+  },
+  "loss_making": false,
+  "sources": [
+   {
+    "title": "2026年3月期 決算短信",
+    "url": "https://www.furukawaelectric.com/ir/library/finalreport/pdf/2026/20260512.pdf",
+    "published": "2026-05"
+   },
+   {
+    "title": "電線大手決算比較",
+    "url": "https://www.sbbit.jp/article/st/186518",
+    "published": "2026-08"
+   }
+  ],
+  "unverified": [
+   "決算短信は未取得、セグメント数値はスニペット",
+   "エネルギーインフラ売上は差額推計",
+   "電装エレクトロニクス売上に食い違い",
+   "光ファイバ世界シェア",
+   "中計の当初目標達成度",
+   "配当方針"
+  ]
+ },
+ {
+  "code": "6479",
+  "name": "ミネベアミツミ",
+  "market_expansion": {
+   "score": 63,
+   "segments": [
+    {
+     "segment": "プレシジョンテクノロジーズ（ベアリング）",
+     "sales_share": 0.169,
+     "market": "ミニチュアボールベアリング",
+     "cagr": 0.074,
+     "cagr_period": "2025-2030",
+     "base_points": 75,
+     "source": "The Business Research Company",
+     "url": "https://m.giikorea.co.kr/report/tbrc1932799-miniature-ball-bearings-global-market-report.html",
+     "published": "unknown"
+    },
+    {
+     "segment": "モーター・ライティング＆センシング",
+     "sales_share": 0.274,
+     "market": "電動機",
+     "cagr": 0.067,
+     "cagr_period": "2021-2030",
+     "base_points": 60,
+     "source": "Allied Market Research",
+     "url": "https://prnewswire.co.uk/news-releases/electric-motor-market-to-reach-207-3-bn-globally-by-2030-at-6-7-cagr-allied-market-research-803968935.html",
+     "published": "unknown"
+    },
+    {
+     "segment": "セミコンダクタ＆エレクトロニクス",
+     "sales_share": 0.355,
+     "market": "アナログ半導体",
+     "cagr": 0.06,
+     "cagr_period": "2025-2030",
+     "base_points": 60,
+     "source": "Technavio",
+     "url": "https://labs.technavio.com/report/analog-semiconductor-market-industry-analysis",
+     "published": "unknown"
+    },
+    {
+     "segment": "アクセスソリューションズ",
+     "sales_share": 0.2,
+     "market": "自動車ドアラッチ",
+     "cagr": 0.043,
+     "cagr_period": "2024-2030",
+     "base_points": 60,
+     "source": "Lucintel",
+     "url": "https://lucintel.com/car-door-latch-market.aspx",
+     "published": "unknown"
+    }
+   ],
+   "adjustment": 0,
+   "rationale": "加重平均62.5≒63。AI DC向けは追い風だが中心ではなく調整なし"
+  },
+  "competitive_advantage": {
+   "score": 80,
+   "components": {
+    "share": {
+     "points": 30,
+     "evidence": "外径22mm以下のミニチュアベアリングで世界シェア約60%（会社調べ）",
+     "url": "https://www.daiwair.co.jp/e-cast_files/6894/pdf/meeting_memo_pdf.pdf"
+    },
+    "margin_vs_peers": {
+     "points": 15,
+     "evidence": "営業利益率6.2%、NSK4.3%・NTN3.8%（±5pt以内）",
+     "url": "https://www.minebeamitsumi.com/english/corp/investors/financials/highlights/annual/",
+     "company_margin": 0.062,
+     "peers": [
+      {
+       "name": "日本精工",
+       "margin": 0.043
+      },
+      {
+       "name": "NTN",
+       "margin": 0.038
+      }
+     ]
+    },
+    "technology": {
+     "points": 20,
+     "evidence": "超精密ベアリングの量産、航空機向け採用、『相合』戦略、14期連続増収",
+     "url": "https://eetimes.itmedia.co.jp/ee/articles/2605/13/news096_2.html"
+    },
+    "orders_customers": {
+     "points": 9,
+     "evidence": "AI DC・航空機向け好調で1Q過去最高。受注残は非開示",
+     "url": "https://quartr.com/events/minebea-mitsumi-inc-6479-q1-2027_F92bomOd"
+    },
+    "midterm_plan": {
+     "points": 6,
+     "evidence": "2026/3期営業利益は修正予想超え。2029/3期目標は大型M&A前提、前中計達成度は未確認",
+     "url": "https://www.automation-news.jp/2026/05/104393/"
+    }
+   },
+   "rationale": "30+15+20+9+6=80"
+  },
+  "dividend": {
+   "latest_actual_dps": 50,
+   "forecast_dps": 60,
+   "forecast_period": "2027年3月期（中間30・期末30）",
+   "payout_policy": "配当性向30%目途",
+   "source_url": "https://scouter.monex.co.jp/report/dps/6479"
+  },
+  "loss_making": false,
+  "sources": [
+   {
+    "title": "2026年3月期 決算説明会資料",
+    "url": "https://www.minebeamitsumi.com/corp/investors/disclosure/financial/p2026/__icsFiles/afieldfile/2026/05/28/e2026_presentation.pdf",
+    "published": "2026-05"
+   }
+  ],
+  "unverified": [
+   "セグメント営業利益",
+   "前中計の目標と達成度",
+   "AIサーバー向けファンモーターの規模",
+   "配当性向30%方針の原文",
+   "MLSの市場CAGRは汎用電動機で代用"
+  ]
+ },
+ {
+  "code": "6855",
+  "name": "日本電子材料",
+  "market_expansion": {
+   "score": 65,
+   "segments": [
+    {
+     "segment": "半導体検査用部品（プローブカード）",
+     "sales_share": 1.0,
+     "market": "プローブカード世界市場",
+     "cagr": 0.069,
+     "cagr_period": "2025-2032",
+     "base_points": 60,
+     "source": "Maximize Market Research",
+     "url": "https://ipsnews.net/business/2025/04/04/probe-card-market-forecasted-to-reach-usd-7-58-bn-by-2032-with-a-cagr-of-6-9-from-2025-to-2032/?amp=1",
+     "published": "2025-04"
+    }
+   ],
+   "adjustment": 5,
+   "rationale": "市場CAGR予測5.4〜9.2%の中間6.9%→60点。HBM・AIメモリ向けMEMSカード（最速分野）に寄るため+5→65"
+  },
+  "competitive_advantage": {
+   "score": 66,
+   "components": {
+    "share": {
+     "points": 12,
+     "evidence": "FormFactor・Technoprobe・MJCと並ぶ主要企業だが自社シェア・順位は未確認→top-10扱い",
+     "url": "https://www.gii.co.jp/report/qyr1866705-semiconductor-probe-cards-global-market-share.html"
+    },
+    "margin_vs_peers": {
+     "points": 15,
+     "evidence": "営業利益率24.7%、同業中央値21.7%（+3.0pt）",
+     "url": "https://kabuyoho.jp/report?bcode=6855",
+     "company_margin": 0.247,
+     "peers": [
+      {
+       "name": "日本マイクロニクス",
+       "margin": 0.236
+      },
+      {
+       "name": "Technoprobe",
+       "margin": 0.217
+      },
+      {
+       "name": "FormFactor",
+       "margin": 0.072
+      }
+     ]
+    },
+    "technology": {
+     "points": 20,
+     "evidence": "メモリ／ロジック向けMEMSプローブカード（Mタイプ）、HBM向けは数量・単価とも高水準",
+     "url": "https://finance.matsui.co.jp/news/578696/index"
+    },
+    "orders_customers": {
+     "points": 9,
+     "evidence": "Micronグループで約29.5%、ソニー10.4%（集中は中程度）",
+     "url": "https://edinetdb.jp/company/E02043/main-customers"
+    },
+    "midterm_plan": {
+     "points": 10,
+     "evidence": "中計2026年度目標（売上300億円・経常50億円）を前倒しで超過",
+     "url": "https://scouter.monex.co.jp/news/detail/6855_20260807_act_20260807_160033_5"
+    }
+   },
+   "rationale": "12+15+20+9+10=66"
+  },
+  "dividend": {
+   "latest_actual_dps": 80,
+   "forecast_dps": 80,
+   "forecast_period": "2027年3月期（5月時点予想）",
+   "payout_policy": "安定的・継続的（数値目標なし）",
+   "source_url": "https://strainer.jp/companies/JP-6855/dividends"
+  },
+  "loss_making": false,
+  "sources": [
+   {
+    "title": "FY3/26決算",
+    "url": "https://scouter.monex.co.jp/news/detail/6855_20260514_act_20260514_160103_2",
+    "published": "2026-05"
+   },
+   {
+    "title": "FormFactor FY2025 10-K",
+    "url": "https://www.sec.gov/Archives/edgar/data/1039399/000103939926000009/form-20251227.htm",
+    "published": "2026-02"
+   }
+  ],
+  "unverified": [
+   "プローブカード比率100%は仮定",
+   "世界シェアと順位",
+   "TechnoprobeのEBITマージン",
+   "FY3/27営業利益予想と修正後配当",
+   "FY3/26主要顧客比率",
+   "中計目標の数値"
+  ]
+ },
+ {
+  "code": "5802",
+  "name": "住友電気工業",
+  "market_expansion": {
+   "score": 51,
+   "segments": [
+    {
+     "segment": "自動車（ワイヤハーネス）",
+     "sales_share": 0.561,
+     "market": "自動車用ワイヤハーネス",
+     "cagr": 0.029,
+     "cagr_period": "2023-2030",
+     "base_points": 40,
+     "source": "MarketsandMarkets",
+     "url": "https://www.marketsandmarkets.com/ResearchInsight/automotive-wiring-harness-market.asp",
+     "published": "unknown"
+    },
+    {
+     "segment": "環境エネルギー（電力ケーブル）",
+     "sales_share": 0.225,
+     "market": "高圧ケーブル",
+     "cagr": 0.068,
+     "cagr_period": "2024-2030",
+     "base_points": 60,
+     "source": "Lucintel（ResearchAndMarkets）",
+     "url": "https://www.researchandmarkets.com/reports/5910138/high-voltage-cable-market-report-trends",
+     "published": "unknown"
+    },
+    {
+     "segment": "情報通信（光）",
+     "sales_share": 0.062,
+     "market": "DC向け光トランシーバ",
+     "cagr": 0.129,
+     "cagr_period": "2026-2032",
+     "base_points": 88,
+     "source": "MarketsandMarkets",
+     "url": "https://www.marketsandmarkets.com/Market-Reports/data-center-optical-transceiver-market-254144786.html",
+     "published": "unknown"
+    },
+    {
+     "segment": "エレクトロニクス（FPC等）",
+     "sales_share": 0.078,
+     "market": "フレキシブル基板",
+     "cagr": 0.123,
+     "cagr_period": "2025-2030",
+     "base_points": 88,
+     "source": "BCC Research",
+     "url": "https://www.bccresearch.com/pressroom/smc/global-flexible-pcb-market-to-nearly-double-reaching-$417-billion-by-2030-",
+     "published": "unknown"
+    },
+    {
+     "segment": "産業素材他（超硬工具等）",
+     "sales_share": 0.074,
+     "market": "超硬工具",
+     "cagr": 0.027,
+     "cagr_period": "2024-2030",
+     "base_points": 40,
+     "source": "Global Industry Analysts",
+     "url": "https://m.giikorea.co.kr/report/go1777918-carbide-tools.html",
+     "published": "unknown"
+    }
+   ],
+   "adjustment": 0,
+   "rationale": "22.4+13.5+5.5+6.9+3.0=51.2→51。DC光は最速分野だが売上の6%にとどまり調整なし"
+  },
+  "competitive_advantage": {
+   "score": 86,
+   "components": {
+    "share": {
+     "points": 30,
+     "evidence": "自動車用ワイヤハーネスで推定25%の世界トップシェア（矢崎・Aptivと3強、2022年頃の記事）",
+     "url": "https://newswitch.jp/p/32483"
+    },
+    "margin_vs_peers": {
+     "points": 15,
+     "evidence": "営業利益率8.2%、同業中央値10.4%（-2.2pt）",
+     "url": "https://www.gyokaidigest.com/industry/wire-cable/2026-FY",
+     "company_margin": 0.082,
+     "peers": [
+      {
+       "name": "フジクラ",
+       "margin": 0.16
+      },
+      {
+       "name": "古河電気工業",
+       "margin": 0.049
+      }
+     ]
+    },
+    "technology": {
+     "points": 20,
+     "evidence": "525kV HVDC XLPEケーブルでAmprion DC35を20億ユーロで受注、マルチコア光ファイバを業界初量産",
+     "url": "https://www.logi-today.com/954303"
+    },
+    "orders_customers": {
+     "points": 15,
+     "evidence": "Amprionから大型HVDC3案件累計5,500億円超、顧客は世界の自動車メーカー・DC向けに分散",
+     "url": "https://newswitch.jp/image/46543"
+    },
+    "midterm_plan": {
+     "points": 6,
+     "evidence": "FY3/26は過去最高だが旧中計2025の目標と達成状況は未確認",
+     "url": "https://www2.jpx.co.jp/disc/58020/140120260511523405.pdf"
+    }
+   },
+   "rationale": "30+15+20+15+6=86"
+  },
+  "dividend": {
+   "latest_actual_dps": 154,
+   "forecast_dps": 39,
+   "forecast_period": "2027年3月期（中間19・期末20、1:4分割後）",
+   "payout_policy": "明示方針は未確認（実績配当性向32〜39%）",
+   "source_url": "https://strainer.jp/companies/JP-5802/dividends"
+  },
+  "loss_making": false,
+  "sources": [
+   {
+    "title": "住友電工 2026 FY セグメント",
+    "url": "https://www.gyokaidigest.com/companies/sumitomo-electric/report/2026-FY",
+    "published": "2026-05"
+   },
+   {
+    "title": "DC35受注",
+    "url": "https://www.logi-today.com/954303",
+    "published": "2026-05"
+   }
+  ],
+  "unverified": [
+   "予想DPS39円と実績154円の差は分割によると推測",
+   "配当方針",
+   "旧中計の達成状況",
+   "ワイヤハーネス市場CAGRは2.9〜10.35%と幅（10.35%なら75点）",
+   "セグメント売上は消去前・出典1つ",
+   "電力ケーブル受注残総額"
+  ]
+ },
+ {
+  "code": "7012",
+  "name": "川崎重工業",
+  "market_expansion": {
+   "score": 67,
+   "segments": [
+    {
+     "segment": "航空宇宙システム",
+     "sales_share": 0.265,
+     "market": "世界航空機構造市場",
+     "cagr": 0.066,
+     "cagr_period": "2026-2035",
+     "base_points": 60,
+     "source": "Allied Market Research",
+     "url": "https://smb.thepostsearchlight.com/article/Aerostructures-Market-to-Reach-dollar1427-billion-Globally-by-2035-at-66percent-CAGR-Allied-Market-Research/6a2983d25f1a39366789139d",
+     "published": "unknown"
+    },
+    {
+     "segment": "エネルギーソリューション＆マリン",
+     "sales_share": 0.188,
+     "market": "世界ガスタービン市場",
+     "cagr": 0.054,
+     "cagr_period": "2026-2035",
+     "base_points": 60,
+     "source": "SNS Insider",
+     "url": "https://www.snsinsider.com/reports/gas-turbine-market-10983",
+     "published": "unknown"
+    },
+    {
+     "segment": "車両",
+     "sales_share": 0.102,
+     "market": "世界鉄道供給市場（UNIFE）",
+     "cagr": 0.03,
+     "cagr_period": "2024-2029",
+     "base_points": 60,
+     "source": "UNIFE World Rail Market Study 2024",
+     "url": "https://railwaygazette.com/news/global-trends-driving-rail-market-growth-unife-study-confirms/67454.article",
+     "published": "2024"
+    },
+    {
+     "segment": "精密機械・ロボット",
+     "sales_share": 0.112,
+     "market": "半導体分野向けロボット",
+     "cagr": 0.078,
+     "cagr_period": "2025-2030",
+     "base_points": 75,
+     "source": "Interact Analysis",
+     "url": "https://www.supplychain247.com/article/industrial-robot-market-rebounds-ai-chip-manufacturing-demand/cbre",
+     "published": "2026"
+    },
+    {
+     "segment": "パワースポーツ＆エンジン",
+     "sales_share": 0.295,
+     "market": "世界パワースポーツ市場",
+     "cagr": 0.065,
+     "cagr_period": "2024-2030",
+     "base_points": 60,
+     "source": "Global Power Sports Market",
+     "url": "https://krajput.digitalpress.blog/global-power-sports-market-projected-to-reach-usd-58-74-billion-by-2030-growing-at-a-cagr-of-6-5/",
+     "published": "unknown"
+    }
+   ],
+   "adjustment": 5,
+   "rationale": "加重平均61.7（その他3.7%除外で再正規化）。防衛予算が過去最大、世界シェア約5割の半導体搬送ロボットで+5→67"
+  },
+  "competitive_advantage": {
+   "score": 78,
+   "components": {
+    "share": {
+     "points": 22,
+     "evidence": "半導体搬送ロボットで世界シェア約5割（2021年報道）、最大セグメントの二輪は首位でないためtop-3相当",
+     "url": "https://newswitch.jp/p/29963"
+    },
+    "margin_vs_peers": {
+     "points": 15,
+     "evidence": "事業利益率6.3%、同業中央値9.4%（-3.1pt）",
+     "url": "https://www.gyokaidigest.com/companies/mitsubishi-heavy/report/2026-FY",
+     "company_margin": 0.063,
+     "peers": [
+      {
+       "name": "三菱重工（事業利益率）",
+       "margin": 0.087
+      },
+      {
+       "name": "IHI",
+       "margin": 0.101
+      }
+     ]
+    },
+    "technology": {
+     "points": 20,
+     "evidence": "世界トップクラスのウェハ搬送ロボット、防衛航空機・潜水艦、航空エンジン部品、ガスタービン・水素",
+     "url": "https://kawasakirobotics.com/uploads/sites/2/2022/01/Wafer-Transfer_J_20251208.pdf"
+    },
+    "orders_customers": {
+     "points": 15,
+     "evidence": "受注高2兆7,391億円で過去最高（B/B約1.19）、顧客は防衛省・航空機メーカー・鉄道・個人と分散",
+     "url": "https://global.kawasaki.com/en/corp/ir/library/pdf/pre_260512-1e.pdf"
+    },
+    "midterm_plan": {
+     "points": 6,
+     "evidence": "事業利益率目標（FY2027に8%）に対し実績約6.3%、売上・利益は過去最高→部分達成",
+     "url": "https://www.crex-data.com/company/7012"
+    }
+   },
+   "rationale": "22+15+20+15+6=78。PS&Eの関税影響と過去の不正事案が減点要因"
+  },
+  "dividend": {
+   "latest_actual_dps": 34.2,
+   "forecast_dps": 40,
+   "forecast_period": "2027年3月期（分割後基準）",
+   "payout_policy": "未確認",
+   "source_url": "https://kabuhai-db.jp/transportation/7012/"
+  },
+  "loss_making": false,
+  "sources": [
+   {
+    "title": "2025年度決算説明資料",
+    "url": "https://www.khi.co.jp/ir/pdf/pre_260512-1j.pdf",
+    "published": "2026-05"
+   },
+   {
+    "title": "財務省 令和8年度防衛関係費",
+    "url": "https://www.mof.go.jp/public_relations/finance/202605/202605g.html",
+    "published": "2026-05"
+   }
+  ],
+  "unverified": [
+   "セグメント売上は二次情報（別サイトと食い違い）",
+   "受注残高",
+   "配当方針",
+   "最新の搬送ロボットシェア（5割は2021年）",
+   "市場CAGR期間のずれ（航空エンジン9.8%なら航空は75点）",
+   "同業の利益定義の違い",
+   "DPS 34.2円は分割後換算"
+  ]
+ },
+ {
+  "code": "1944",
+  "name": "きんでん",
+  "market_expansion": {
+   "score": 60,
+   "segments": [
+    {
+     "segment": "設備工事業（電気・空調管・情報通信）",
+     "sales_share": 1.0,
+     "market": "日本建設市場",
+     "cagr": 0.035,
+     "cagr_period": "2025-2029",
+     "base_points": 60,
+     "source": "ResearchAndMarkets Japan Construction Databook",
+     "url": "https://www.businesswire.com/news/home/20251118878148/en",
+     "published": "2025-11"
+    }
+   ],
+   "adjustment": 0,
+   "rationale": "単一セグメント60。DC建設への具体的な露出は資料で確認できず加点なし。GlobalDataは2028-30年を年1.3%と予測し下振れリスク"
+  },
+  "competitive_advantage": {
+   "score": 76,
+   "components": {
+    "share": {
+     "points": 30,
+     "evidence": "FY26/3連結売上7,507億円で電気工事業の国内首位（関電工7,420億円）",
+     "url": "https://the-shashi.com/rankings/electrical-contractor/"
+    },
+    "margin_vs_peers": {
+     "points": 15,
+     "evidence": "営業利益率12.0%、同業中央値11.2%（+0.8pt）",
+     "url": "https://www2.jpx.co.jp/disc/19420/081220260601556468_tse-acedjpsm-19420-20260601319420-ixbrl.htm",
+     "company_margin": 0.12,
+     "peers": [
+      {
+       "name": "関電工",
+       "margin": 0.112
+      },
+      {
+       "name": "九電工（クラフティア）",
+       "margin": 0.115
+      },
+      {
+       "name": "エクシオグループ",
+       "margin": 0.066
+      }
+     ]
+    },
+    "technology": {
+     "points": 12,
+     "evidence": "総合設備工事力はあるが差別化技術の具体的記載なし→中程度",
+     "url": "https://job.mynavi.jp/28/pc/search/corp146/outline.html"
+    },
+    "orders_customers": {
+     "points": 9,
+     "evidence": "受注高・繰越工事高は未確認。1Q完成工事高+14.8%、関西電力が大株主（24.33%）",
+     "url": "https://www2.jpx.co.jp/disc/19440/081220260728501118_tse-qcedjpsm-19440-20260729319440-ixbrl.htm"
+    },
+    "midterm_plan": {
+     "points": 10,
+     "evidence": "SG2026の売上7,000億円・営業利益500億円目標を2年前倒しで達成（FY26/3営業利益902億円）",
+     "url": "https://finance.logmi.jp/381831"
+    }
+   },
+   "rationale": "30+15+12+9+10=76"
+  },
+  "dividend": {
+   "latest_actual_dps": 130,
+   "forecast_dps": 240,
+   "forecast_period": "2027年3月期（中間120・期末120）",
+   "payout_policy": "未確認（自己株TOBで自己資本比率72.4%→49.9%）",
+   "source_url": "https://s.kabutan.jp/stocks/1944/news/k202604270032/"
+  },
+  "loss_making": false,
+  "sources": [
+   {
+    "title": "2026年3月期決算短信",
+    "url": "https://www2.jpx.co.jp/disc/19440/081220260420506537_tse-acedjpsm-19440-20260427319440-ixbrl.htm",
+    "published": "2026-04"
+   },
+   {
+    "title": "関西電力 TOB応募結果",
+    "url": "https://www.kepco.co.jp/ir/brief/disclosure/pdf/kaiji20260602_1.pdf",
+    "published": "2026-06"
+   }
+  ],
+  "unverified": [
+   "受注高・繰越工事高",
+   "配当方針",
+   "DC・半導体工場の受注比率",
+   "電気設備工事市場のCAGR（建設市場全体で代用）",
+   "130円の内訳"
+  ]
+ }
+]

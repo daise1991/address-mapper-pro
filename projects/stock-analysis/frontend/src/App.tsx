@@ -8,6 +8,7 @@ import Watchlist from "./pages/Watchlist";
 import Portfolio from "./pages/Portfolio";
 import Verification from "./pages/Verification";
 import System from "./pages/System";
+import CompareV5 from "./pages/CompareV5";
 
 type Status = {
   data_mode: string;
@@ -24,6 +25,7 @@ const TABS = [
   ["portfolio", "保有・資金"],
   ["verification", "検証"],
   ["watchlist", "銘柄管理"],
+  ["v5", "v5比較"],
   ["system", "通知・システム"],
 ] as const;
 type Tab = (typeof TABS)[number][0];
@@ -78,6 +80,8 @@ export default function App() {
             <Verification meta={meta.data} />
           ) : tab === "watchlist" ? (
             <Watchlist meta={meta.data} onOpen={setCode} />
+          ) : tab === "v5" ? (
+            <CompareV5 />
           ) : (
             <System />
           )

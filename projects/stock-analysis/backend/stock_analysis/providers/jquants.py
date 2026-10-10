@@ -116,6 +116,7 @@ class JQuantsProvider(Provider):
                 "listed": r is not None,
                 "name": _pick(r, "CoName", "CompanyName") if r else None,
                 "market": _pick(r, "MktNm", "MarketCodeName") if r else None,
+                "sector": _pick(r, "S17Nm", "Sector17CodeName") if r else None,
             })
         return out
 

@@ -130,6 +130,13 @@ def main() -> None:
     ap_.add_argument("--note", required=True)
     rs = sub.add_parser("rescore", help="最新（または指定日）の採点をやり直す。計算方式を更新したあとに使う")
     rs.add_argument("--date")
+    v5 = sub.add_parser("v5-run", help="v5 を参考採点（v4 の正式採点は変更しない）")
+    v5.add_argument("--date")
+    cv = sub.add_parser("compare-v5", help="同じ日の v4 と v5 を比較し、docs に保存")
+    cv.add_argument("--date")
+    cv.add_argument("--out", default=None)
+    iq = sub.add_parser("import-qualitative", help="市場拡大・競争優位の調査結果を取り込む（承認済みルールで再計算）")
+    iq.add_argument("path")
     ex = sub.add_parser("explain", help="銘柄の買い点数の計算根拠を表示（例: explain 5711）")
     ex.add_argument("code")
     sub.add_parser("check", help="J-Quants / EDINET の接続チェック（キー設定後に最初に実行）")
@@ -213,6 +220,33 @@ def main() -> None:
             raise SystemExit("採点履歴がありません。先に run-daily を実行してください")
         n = len(run_scoring(conn, date.fromisoformat(d0)))
         print(f"{d0} の {n}銘柄を採点し直しました（変更前の結果は scores_archive に保存）")
+    elif args.cmd in ("v5-run", "compare-v5"):
+        from .v5 import compare as v5compare
+        from .v5 import engine as v5engine
+        conn = connect()
+        d0 = date.fromisoformat(args.date) if args.date else date.fromisoformat(
+            conn.execute("SELECT MAX(run_date) FROM scores").fetchone()[0])
+        rows = v5engine.run(conn, d0)
+        if args.cmd == "v5-run":
+            print(f"{d0} の {len(rows)}銘柄を v5 で参考採点しました（正式な採点方式は v4 のまま）")
+        else:
+            rep = v5compare.compare(conn, d0)
+            md = v5compare.to_markdown(rep)
+            from pathlib import Path
+            out = Path(args.out) if args.out else get_settings().db_path.parent / f"compare_v4_v5_{d0}.md"
+            out.write_text(md, encoding="utf-8")
+            print(md)
+            print(f"\n保存先: {out}")
+    elif args.cmd == "import-qualitative":
+        from pathlib import Path
+
+        from .v5 import qualitative
+        conn = connect()
+        res = qualitative.import_items(conn, json.loads(Path(args.path).read_text(encoding="utf-8")), Path(args.path).name)
+        for r in res:
+            print(f"{r['code']}: 市場拡大 {r['market_expansion']} / 競争優位 {r['competitive_advantage']} / 保存 {'済' if r['saved'] else '不可'}")
+            for i in r["issues"]:
+                print(f"   ! {i}")
     elif args.cmd == "explain":
         from .checks import explain
         print("\n".join(explain(connect(), args.code.upper())))
