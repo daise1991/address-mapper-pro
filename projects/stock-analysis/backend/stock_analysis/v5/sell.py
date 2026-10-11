@@ -36,7 +36,8 @@ def score(f: V5Features, v_over_p: float | None, growth_drop: float | None, q_ou
         slow = min(100.0, slow + 15)
 
     has_fin = g("history_years") and g("history_years") > 0
-    rev_count = min(100.0, 40.0 * (g("disc_revision_down_120d") or 0)) if has_fin else None
+    rev_count = (min(100.0, 40.0 * g("disc_revision_down_120d"))
+                 if has_fin and g("disc_revision_down_120d") is not None else None)
     if rev_count is not None and g("disc_revision_up_120d"):
         rev_count = max(0.0, rev_count - 20)
 
@@ -46,7 +47,7 @@ def score(f: V5Features, v_over_p: float | None, growth_drop: float | None, q_ou
     dil_shares = scale(g("share_change"), SHARE_PTS)
     if g("share_change_excluded_as_split") is not None:
         dil_shares = 0.0  # 株式分割による増加は希薄化ではない
-    offering = 70.0 if g("disc_offering_120d") else (0.0 if has_fin else None)
+    offering = None if g("disc_offering_120d") is None else (70.0 if g("disc_offering_120d") else 0.0)
 
     rsi = scale(g("rsi14"), RSI_PTS)
     dev = _max(scale(g("dev25"), DEV25_PTS), scale(g("dev200"), DEV200_PTS))

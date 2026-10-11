@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import json
+import math
 import sqlite3
 import statistics
 from datetime import date
@@ -69,9 +70,10 @@ def _history(conn: sqlite3.Connection, code: str, event: str, payload: Any) -> N
                  (code, event, json.dumps(payload, ensure_ascii=False, default=str), now_iso()))
 
 
-def normalized_eps_from_db(conn: sqlite3.Connection, code: str, as_of: date) -> float | None:
-    """過去最大5期の純利益と最新予想の中央値 ÷ 現在の株式数（自己株除く）。株式分割の影響を受けない。"""
-    from .scoring.features import latest_forecast
+def normalized_eps_from_db(conn: sqlite3.Connection, code: str, as_of: date, split_adjust: bool = True) -> float | None:
+    """過去最大5期の純利益と最新予想の中央値 ÷ 評価日の株式数（自己株除く）。決算後の株式分割も株数に反映する。
+    split_adjust=False は決算期末の株数のまま（v4.1 までの計算。登録済みの基準値との比較だけに使う）。"""
+    from .scoring.features import current_shares, latest_forecast
     cutoff = f"{as_of.isoformat()}T23:59:59+09:00"
     hist = conn.execute(
         """SELECT fiscal_period_end, MAX(disclosed_at) AS d, net_income, shares_outstanding, treasury_shares
@@ -79,7 +81,10 @@ def normalized_eps_from_db(conn: sqlite3.Connection, code: str, as_of: date) -> 
            GROUP BY fiscal_period_end ORDER BY fiscal_period_end DESC LIMIT 5""", (code, cutoff)).fetchall()
     if not hist:
         return None
-    shares = (hist[0]["shares_outstanding"] or 0) - (hist[0]["treasury_shares"] or 0)
+    if split_adjust:
+        shares = current_shares(conn, code, hist[0], as_of)  # 決算後の株式分割を反映した株数
+    else:
+        shares = (hist[0]["shares_outstanding"] or 0) - (hist[0]["treasury_shares"] or 0)
     profits = [h["net_income"] for h in hist]
     lf = latest_forecast(conn, code, hist[0]["fiscal_period_end"], cutoff)
     if lf and lf["forecast_net_income"] is not None:
@@ -103,6 +108,20 @@ def current_anchor(conn: sqlite3.Connection, code: str, anchor_type: str, as_of:
     lf = latest_forecast(conn, code, fy["fiscal_period_end"], cutoff)
     v = (lf and lf["forecast_eps"]) or fy["forecast_eps"]
     return v if v and v > 0 else None
+
+
+def anchor_ratio(conn: sqlite3.Connection, r: dict[str, Any], as_of: date) -> tuple[float | None, float]:
+    """登録時の基準EPSから今の基準EPSへの変化率。正常化EPSは、登録時の値が分割前の株数で計算されていた
+    （v4.1 まで）なら、今の値も同じ株数基準で比べる（分割を利益の減少と見誤らない）。"""
+    now = current_anchor(conn, r["code"], r["anchor_type"], as_of)
+    if not now or not r["anchor_eps"]:
+        return now, 1.0
+    ratio = now / r["anchor_eps"]
+    if r["anchor_type"] == "normalized":
+        raw = normalized_eps_from_db(conn, r["code"], as_of, split_adjust=False)
+        if raw and raw != now and abs(math.log(raw / r["anchor_eps"])) < abs(math.log(ratio)):
+            ratio = raw / r["anchor_eps"]
+    return now, ratio
 
 
 def import_research(conn: sqlite3.Connection, items: list[dict[str, Any]], as_of: date, source: str) -> list[str]:
@@ -176,8 +195,7 @@ def scenario_assumptions(conn: sqlite3.Connection, code: str, as_of: date) -> di
     r = get(conn, code)
     if not r:
         return None
-    now_anchor = current_anchor(conn, code, r["anchor_type"], as_of)
-    ratio = (now_anchor / r["anchor_eps"]) if (now_anchor and r["anchor_eps"]) else 1.0
+    now_anchor, ratio = anchor_ratio(conn, r, as_of)
     factor = min(max(ratio ** ELASTICITY, FACTOR_BOUNDS[0]), FACTOR_BOUNDS[1])
     out = {}
     for k in SCENARIOS:
@@ -201,9 +219,8 @@ def monitor(conn: sqlite3.Connection, d: date, method_version: str) -> list[dict
     changed = []
     for r in rows(conn.execute("SELECT * FROM assumption_research WHERE status='verified'")):
         reasons = []
-        now_anchor = current_anchor(conn, r["code"], r["anchor_type"], d)
+        now_anchor, ratio = anchor_ratio(conn, r, d)
         if now_anchor and r["anchor_eps"]:
-            ratio = now_anchor / r["anchor_eps"]
             if abs(ratio - 1) >= REVIEW_THRESHOLD:
                 reasons.append(f"基準EPSが登録時から{ratio - 1:+.0%}変化（{r['anchor_eps']:.1f}→{now_anchor:.1f}円）")
         if r["approved_at"]:

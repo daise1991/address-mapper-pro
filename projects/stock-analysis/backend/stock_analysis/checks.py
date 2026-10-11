@@ -115,9 +115,26 @@ def run_all() -> list[dict[str, Any]]:
     return results
 
 
+ORIGIN_LABELS = {"research": "調査前提", "manual": "登録済みの前提", "auto": "自動初期推計"}
+STATUS_LABELS = {"provisional": "暫定・承認前", "review_required": "要再承認", "verified": "承認済み", "unconfirmed": "前提未確認"}
+
+
+def _n(v: Any, unit: str = "") -> str:
+    """未算定（None）を 0 と書かない。"""
+    return "未算定" if v is None else f"{v}{unit}"
+
+
+def _factors(det: dict[str, Any]) -> str:
+    return "、".join(f"{x['label']}={_n(x.get('score'))}" for x in (det.get("factors") or {}).values()) or "内訳なし"
+
+
 def explain(conn: Any, code: str, d: date | None = None) -> list[str]:
-    """買い点数の計算根拠（使った決算・予想・前提・計算過程）を文字で返す。極端な値の原因調査用。"""
-    from .assumptions import resolve
+    """ランキングと同じ保存済みの評価結果（v4 正式・v5 参考）と、その計算根拠を文字で返す。
+    v4 は採点と同じ前提（analysis.scoring_assumption）で計算し直し、保存値との一致も表示する。"""
+    import json
+
+    from .analysis import scoring_assumption
+    from .assumptions import auto_baseline
     from .scoring.features import latest_forecast
     from .scoring.valuation import evaluate
 
@@ -128,38 +145,77 @@ def explain(conn: Any, code: str, d: date | None = None) -> list[str]:
     if not sec:
         return [f"{code} は登録されていません"]
     out = [f"■ {code} {sec['name']}（分類: {sec['category']} / {sec['asset_type']}）  評価日 {d}"]
+    sc = conn.execute("SELECT * FROM scores WHERE code=? AND run_date=?", (code, d.isoformat())).fetchone()
+
+    out.append("【v4 正式（ランキングと同じ保存値）】")
+    origin = None
+    if not sc:
+        out.append("  この評価日の v4 採点はありません")
+    else:
+        bd = json.loads(sc["buy_detail"] or "{}")
+        rated = sc["buy_status"] == "rated"
+        inp = bd.get("inputs") or {}
+        origin = bd.get("assumption_origin")
+        out.append(f"  方式 {sc['method_version']} ／ 採点 {sc['created_at']} ／ 株価 {_n(sc['price'], '円')}（{sc['price_date'] or '株価なし'}）")
+        out.append(f"  成長期待 {_n(sc['growth_score'])} ／ 買い {sc['buy_score'] if rated else '未評価（' + str(sc['buy_status']) + '）'}"
+                   f" ／ 売り {_n(sc['sell_score'])} ／ 理論価値 {_n(sc['theoretical_value'], '円')} ／ 狙い目 {_n(sc['target_price'], '円')}")
+        out.append(f"  使った前提: {ORIGIN_LABELS.get(origin, origin or '不明')}（{STATUS_LABELS.get(bd.get('assumption_status'), bd.get('assumption_status'))}）"
+                   f" ／ {inp.get('target_year')}年EPS {_n(inp.get('eps_forecast') or inp.get('normalized_eps'), '円')}"
+                   f" ／ 想定PER {_n(inp.get('assumed_per'), '倍')} ／ 必要利回り {_n(inp.get('required_return'))}"
+                   f" ／ 安全余裕 {_n(inp.get('safety_margin'))} ／ 年数 {_n(bd.get('years'))}")
+        out.append(f"  前提の理由: {inp.get('reason') or '-'}")
+        if bd.get("data_issue"):
+            out.append(f"  データの注意: {bd['data_issue']}")
+        # 採点と同じ前提で計算し直し、保存値と照合する
+        a, o2, _, _, _ = scoring_assumption(conn, code, d)
+        v = evaluate(a, sc["price"], d)
+        same = o2 == origin and v.theoretical_value == sc["theoretical_value"] and v.buy_score == sc["buy_score"]
+        out.append(f"  再計算: 将来株価 {_n(v.future_price)} → 理論価値 {_n(v.theoretical_value)} V/P {_n(v.v_over_p)} 買い {_n(v.buy_score)}"
+                   f" → 保存値と{'一致' if same else '不一致（前提か入力データが採点後に変わった可能性）'}")
+        out.append(f"  成長期待の内訳: {_factors(json.loads(sc['growth_detail'] or '{}'))}")
+        out.append(f"  売りの内訳: {_factors(json.loads(sc['sell_detail'] or '{}'))}")
+        out.append(f"  採点に使った情報: {json.loads(sc['indicators'] or '{}').get('sources')}")
+
+    v5 = conn.execute("SELECT * FROM scores_v5 WHERE code=? AND run_date=?", (code, d.isoformat())).fetchone()
+    out.append("【v5 参考（正式採用前。ランキングの点数とは別）】")
+    if not v5:
+        out.append("  この評価日の v5 参考計算はありません")
+    else:
+        b5 = json.loads(v5["buy_detail"] or "{}")
+        pb = b5.get("per_basis") or {}
+        out.append(f"  方式 {v5['method_version']} ／ 採点 {v5['created_at']} ／ 成長 正式 {_n(v5['growth_formal'])}・参考 {_n(v5['growth_reference'])}"
+                   f"（そろい具合 {_n(v5['growth_coverage'])}） ／ 買い {_n(v5['buy_score'])} ／ 理論価値 {_n(v5['theoretical_value'], '円')}"
+                   f" ／ 売り 正式 {_n(v5['sell_formal'])}・参考 {_n(v5['sell_reference'])} ／ 信頼度 {_n(v5['confidence'])}")
+        out.append(f"  PER: {pb.get('policy') or '-'} 中央値 {_n(pb.get('median'), '倍')}（適用 {pb.get('applied')}） ／ 乖離 {_n(b5.get('gap_pct'), '%')}"
+                   f" ／ 重大リスク {', '.join(x['type'] for x in json.loads(v5['severe_risks'] or '[]')) or 'なし'}")
+
+    if sc and origin != "auto":
+        a0 = auto_baseline(conn, code, d)
+        v0 = evaluate(a0, sc["price"], d)
+        out.append(f"【参考：自動初期推計（採点には使っていない）】理論価値 {_n(v0.theoretical_value)} 買い {_n(v0.buy_score)}"
+                   f" ／ EPS {_n(a0 and (a0.eps_forecast or a0.normalized_eps))} PER {_n(a0 and a0.assumed_per)} 利回り {_n(a0 and a0.required_return)}")
+
     q = conn.execute("SELECT date, close, adj_close, adjustment_factor, source FROM daily_quotes WHERE code=? AND date<=? ORDER BY date DESC LIMIT 1",
                      (code, d.isoformat())).fetchone()
-    out.append(f"株価: {dict(q) if q else '無し'}")
+    out.append(f"株価データ: {dict(q) if q else '無し'}")
+    splits = conn.execute("SELECT date, adjustment_factor FROM daily_quotes WHERE code=? AND date<=? AND adjustment_factor IS NOT NULL"
+                          " AND adjustment_factor<>1 ORDER BY date", (code, d.isoformat())).fetchall()
+    out.append("株式分割・併合（調整係数≠1）: " + ("、".join(f"{r['date']} 係数{r['adjustment_factor']}" for r in splits) or "なし"))
     cutoff = f"{d.isoformat()}T23:59:59+09:00"
     fys = conn.execute(
         """SELECT fiscal_period_end, period_type, disclosed_at, document_type, eps, forecast_eps, forecast_fy_end,
                   net_income, shares_outstanding, source FROM financials
            WHERE code=? AND disclosed_at<=? ORDER BY disclosed_at DESC LIMIT 6""", (code, cutoff)).fetchall()
-    out.append("直近の決算データ（新しい順）:")
+    out.append("直近の決算データ（新しい順。分割前の決算は分割前の株数・EPS のまま）:")
     out += [f"  {dict(r)}" for r in fys] or ["  無し"]
     fy = next((r for r in fys if r["period_type"] == "FY"), None)
     if fy:
-        lf = latest_forecast(conn, code, fy["fiscal_period_end"], cutoff)
-        out.append(f"採用した最新の会社予想: {lf}")
+        out.append(f"採用した最新の会社予想: {latest_forecast(conn, code, fy['fiscal_period_end'], cutoff)}")
         if fy["net_income"] and fy["shares_outstanding"] and fy["eps"]:
             implied = fy["net_income"] / fy["shares_outstanding"]
             ratio = fy["eps"] / implied if implied else None
             out.append(f"検算: 純利益÷発行済株式数 = {implied:.1f}円（EPS {fy['eps']}円との比 {ratio:.2f}）"
                        + ("  ← 株式分割・単位の不一致の可能性" if ratio and not 0.8 < ratio < 1.25 else ""))
-    a, origin = resolve(conn, code, d)
-    out.append(f"評価前提（{origin}）: {a}")
-    v = evaluate(a, q["close"] if q else None, d)
-    out.append(f"計算: 将来株価={v.future_price} 年数={v.years} 理論価値V={v.theoretical_value} V/P={v.v_over_p} "
-               f"買い点数={v.buy_score}（k150={v.buy_score_k150}） 理由: {v.reason}")
-    sc = conn.execute("SELECT sell_score, sell_detail, indicators FROM scores WHERE code=? AND run_date=?",
-                      (code, d.isoformat())).fetchone()
-    if sc and sc["sell_detail"]:
-        import json
-        det = json.loads(sc["sell_detail"])
-        parts = [f"{x['label']}={x['score']}" for x in det.get("factors", {}).values()]
-        out.append(f"売り点数 {sc['sell_score']}: " + "、".join(parts))
-        out.append(f"採点に使った情報: {json.loads(sc['indicators'] or '{}').get('sources')}")
     disc = conn.execute("SELECT disclosed_at, category, title FROM disclosures WHERE code=? ORDER BY disclosed_at DESC LIMIT 5",
                         (code,)).fetchall()
     out.append("直近の開示: " + (" ／ ".join(f"{r['disclosed_at'][:10]} {r['category']} {r['title']}" for r in disc) or "なし"))

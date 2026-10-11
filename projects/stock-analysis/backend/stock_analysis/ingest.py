@@ -102,8 +102,9 @@ def ingest_quotes(conn: sqlite3.Connection, provider: Provider, code: str, start
             "code": code, **{k: r.get(k) for k in ("date", "open", "high", "low", "close", "volume", "adjustment_factor", "adj_close")},
             "is_final": 1, "source": f"{provider.name}(旧{fetch_code})" if fetch_code else provider.name, "fetched_at": ts,
         }, ["code", "date"])
-    # 分割・併合があれば過去の調整後終値を更新させるため再取得を促す
-    if any((r.get("adjustment_factor") or 1.0) != 1.0 for r in rows):
+    # 分割・併合があれば過去の調整後終値を更新させるため再取得を促す。
+    # 取得範囲より前の株価が保存済みのときだけ（全期間を取り直した場合は調整後終値がそろっているので記録しない）
+    if prev and any((r.get("adjustment_factor") or 1.0) != 1.0 for r in rows):
         record_issue(conn, code, end.isoformat(), "adjustment_factor", "anomaly", "株式分割・併合を検出。全期間の再取得が必要")
     log_fetch(conn, run_id, provider.name, f"quotes:{code}", "ok", f"{len(rows)} rows")
     conn.commit()

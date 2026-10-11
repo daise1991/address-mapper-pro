@@ -23,7 +23,7 @@ from ..scoring.valuation import years_until
 from . import confidence, growth, per_history, qualitative, risk, sell, valuation
 from .features import build, company_forecast_errors
 
-VERSION = "2026.10-v5.1"  # v5.1: 購入候補に「株価≦狙い目」、乖離率（%）を保存
+VERSION = "2026.10-v5.5"  # v5.5: 過去5年PERに注意があるときは置き換えない / v5.4: 観測していない開示を0件扱いにしない / v5.3: 正常化EPSの株数に決算後の分割を反映 / v5.2: 分割後の基準で出た予想EPSを二重補正しない / v5.1: 購入候補に「株価≦狙い目」、乖離率（%）を保存
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS scores_v5 (
@@ -189,6 +189,11 @@ def score_one(conn: sqlite3.Connection, code: str, d: date) -> dict[str, Any]:
         "inputs_hash": _stable_hash({"f": f.values, "q": qual, "a": str(base_a)}),  # 同一入力の検証用
         "created_at": now_iso(),
     }
+    conn.execute("CREATE TABLE IF NOT EXISTS scores_v5_archive AS SELECT *, '' AS archived_at FROM scores_v5 WHERE 0")
+    old = conn.execute("SELECT method_version FROM scores_v5 WHERE run_date=? AND code=?", (row["run_date"], code)).fetchone()
+    if old and old["method_version"] != row["method_version"]:
+        conn.execute("INSERT INTO scores_v5_archive SELECT *, ? FROM scores_v5 WHERE run_date=? AND code=?",
+                     (now_iso(), row["run_date"], code))
     upsert(conn, "scores_v5", row, ["run_date", "code"])
     return row
 

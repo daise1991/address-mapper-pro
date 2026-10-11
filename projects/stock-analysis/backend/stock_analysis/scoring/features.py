@@ -1,6 +1,7 @@
 """採点用の特徴量を「その日時点で公表済みのデータだけ」から作る（先読み防止）。"""
 from __future__ import annotations
 
+import math
 import sqlite3
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
@@ -53,7 +54,8 @@ FORECAST_FIELDS = ("forecast_revenue", "forecast_operating_profit", "forecast_ne
 def latest_forecast(conn: sqlite3.Connection, code: str, after_fy_end: str, cutoff: str) -> dict[str, Any] | None:
     """after_fy_end より後の決算期を対象とする、cutoff 時点で最新の会社予想（四半期決算・予想修正を含む）。"""
     r = conn.execute(
-        f"""SELECT {', '.join(FORECAST_FIELDS)}, forecast_fy_end, disclosed_at, source FROM financials
+        f"""SELECT {', '.join(FORECAST_FIELDS)}, forecast_fy_end, disclosed_at, source,
+                   period_type, eps, shares_outstanding, treasury_shares FROM financials
             WHERE code=? AND forecast_fy_end>? AND disclosed_at<=?
               AND (forecast_operating_profit IS NOT NULL OR forecast_eps IS NOT NULL)
             ORDER BY forecast_fy_end ASC, disclosed_at DESC LIMIT 1""",
@@ -70,6 +72,61 @@ def split_ratio(conn: sqlite3.Connection, code: str, after: str, until: str) -> 
         if row["adjustment_factor"] > 0:
             r /= row["adjustment_factor"]
     return r
+
+
+
+def current_shares(conn: sqlite3.Connection, code: str, row: Any, as_of: date) -> float:
+    """決算の株数（期末時点・自己株除く）を評価日の株数基準に直す。純利益÷株数で1株あたりを出すときの共通処理。
+    決算期末より後に効力が生じた分割だけを掛ける。株数がすでに分割後の基準で書き直されていれば
+    （前の期の株数との比が分割倍率に近ければ）掛けない（二重補正の防止）。"""
+    shares = (row["shares_outstanding"] or 0) - (row["treasury_shares"] or 0)
+    s = split_ratio(conn, code, row["fiscal_period_end"], as_of.isoformat())
+    if shares <= 0 or s == 1.0:
+        return shares
+    prev = conn.execute("""SELECT shares_outstanding FROM financials WHERE code=? AND fiscal_period_end<?
+                           AND shares_outstanding>0 ORDER BY fiscal_period_end DESC, disclosed_at DESC LIMIT 1""",
+                        (code, row["fiscal_period_end"])).fetchone()
+    if prev and row["shares_outstanding"]:
+        q = row["shares_outstanding"] / prev[0]
+        if abs(math.log(q / s)) < abs(math.log(q)):
+            return shares  # 株数はすでに分割後の基準
+    return shares * s
+
+
+
+def disclosure_observed(conn: sqlite3.Connection, code: str, as_of: date, days: int = 120) -> dict[str, bool]:
+    """開示件数を「0件」と言えるか。見ていない期間の 0 件を 0 点にしない（データ不足として扱う）。
+    revision: 下方・上方修正は会社予想の変化から作るため、直近約15か月に会社予想が無い会社は観測できない。
+    offering: 増資等は EDINET の取得記録（fetch_log の edinet ok）が期間の始めまで遡れるときだけ観測済み。"""
+    cutoff = f"{as_of.isoformat()}T23:59:59+09:00"
+    rev = conn.execute(
+        """SELECT 1 FROM financials WHERE code=? AND disclosed_at<=? AND disclosed_at>=?
+             AND (forecast_operating_profit IS NOT NULL OR forecast_net_income IS NOT NULL OR forecast_eps IS NOT NULL) LIMIT 1""",
+        (code, cutoff, (as_of - timedelta(days=450)).isoformat())).fetchone()
+    first = conn.execute("SELECT MIN(target) FROM fetch_log WHERE source='edinet' AND status='ok'").fetchone()[0]
+    return {"revision": rev is not None,
+            "offering": bool(first) and first <= (as_of - timedelta(days=days)).isoformat()}
+
+
+def forecast_split_factor(conn: sqlite3.Connection, code: str, fc: dict[str, Any], as_of: date) -> float:
+    """会社予想（1株あたり）を評価日の株数基準に直す倍率。予想の公表日より後の分割だけを補正する。
+    分割前に公表された予想でも、すでに分割後の基準で書かれていれば補正しない（二重補正の防止）。
+    基準の判定：本決算の行は実績EPS÷予想EPS、四半期の行は 予想純利益÷予想EPS で出した株数÷発行済株式数。
+    分割前の基準なら 1 前後、分割後の基準なら分割倍率前後になるので、近い方を採る。"""
+    s = split_ratio(conn, code, fc["disclosed_at"], as_of.isoformat())
+    fe = fc.get("forecast_eps")
+    if s == 1.0 or not fe or fe <= 0:
+        return 1 / s
+    q = None
+    if fc.get("period_type") == "FY" and fc.get("eps") and fc["eps"] > 0:
+        q = fc["eps"] / fe
+    else:
+        shares = (fc.get("shares_outstanding") or 0) - (fc.get("treasury_shares") or 0)
+        if fc.get("forecast_net_income") and fc["forecast_net_income"] > 0 and shares > 0:
+            q = (fc["forecast_net_income"] / fe) / shares
+    if q and q > 0 and abs(math.log(q / s)) < abs(math.log(q)):
+        return 1.0  # 予想はすでに分割後の基準
+    return 1 / s
 
 
 def build_features(
@@ -109,9 +166,12 @@ def build_features(
         prev = fy_rows[1] if len(fy_rows) > 1 else None
         f.sources.append(f"{cur['source']}:{cur['fiscal_period_end']}@{cur['disclosed_at']}")
         lf = latest_forecast(conn, code, cur["fiscal_period_end"], cutoff)
+        fc_row = dict(cur)  # 予想の出どころ（分割補正は予想の公表日と基準で決める）
         if lf and lf["disclosed_at"] > cur["disclosed_at"]:  # 本決算後に予想が更新されていれば最新を使う
             cur.update({k: lf[k] for k in FORECAST_FIELDS if lf[k] is not None})
             f.sources.append(f"{lf['source']}:予想{lf['forecast_fy_end']}@{lf['disclosed_at']}")
+            if lf["forecast_eps"] is not None:
+                fc_row = dict(lf)
         v["fiscal_period_end"] = cur["fiscal_period_end"]
         v["revenue"] = cur["revenue"]
         v["operating_profit"] = cur["operating_profit"]
@@ -148,7 +208,13 @@ def build_features(
             v["per"] = price / (cur["eps"] * adj)
         if price and cur["bps"] and cur["bps"] > 0:
             v["pbr"] = price / (cur["bps"] * adj)
-        base_eps = (cur["forecast_eps"] or cur["eps"] or 0) * adj or None
+        if cur["forecast_eps"]:
+            fc_adj = forecast_split_factor(conn, code, fc_row, as_of)
+            base_eps = cur["forecast_eps"] * fc_adj
+            if fc_adj != adj:
+                f.sources.append(f"予想EPSは分割後の基準（補正倍率 {fc_adj:g}、実績は {adj:g}）")
+        else:
+            base_eps = (cur["eps"] or 0) * adj or None
         if eps_target and base_eps and base_eps > 0 and eps_target > 0 and target_years and target_years > 0.5:
             v["eps_cagr_to_target"] = (eps_target / base_eps) ** (1 / target_years) - 1
 
@@ -163,7 +229,11 @@ def build_features(
         v["progress_gap"] = q["operating_profit"] / q["forecast_operating_profit"] - expected
 
     since = datetime.combine(as_of - timedelta(days=120), time(0), JST).isoformat()
+    obs = disclosure_observed(conn, code, as_of)
     for cat in ("revision_down", "revision_up", "offering", "buyback"):
+        if not obs["revision" if cat.startswith("revision") else "offering"]:
+            v[f"disc_{cat}_120d"] = None  # 観測していない（0件扱いにしない）
+            continue
         v[f"disc_{cat}_120d"] = conn.execute(
             "SELECT COUNT(*) FROM disclosures WHERE code=? AND category=? AND disclosed_at BETWEEN ? AND ?",
             (code, cat, since, cutoff),

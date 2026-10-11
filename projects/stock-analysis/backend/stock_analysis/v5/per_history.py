@@ -85,6 +85,9 @@ def per_basis(conn: sqlite3.Connection, code: str, as_of: date, f_values: dict[s
         a.append(f"事業規模の急変（売上の年平均成長率 {f_values['revenue_cagr_hist']:.0%}）")
     if research_base_per and abs(med / research_base_per - 1) > MAX_RESEARCH_GAP:
         a.append(f"調査の標準PER {research_base_per:.1f}倍と大きく乖離")
+    if a:
+        out["applied"] = False  # 注意がある中央値は使わない（元の想定PERのまま）
+        a.append("注意があるため過去PERは使わず、元の想定PERで計算")
     return out
 
 

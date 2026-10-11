@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import date, timedelta
 from typing import Any
 
-from ..scoring.features import latest_forecast, split_ratio
+from ..scoring.features import disclosure_observed, forecast_split_factor, latest_forecast, split_ratio
 
 MIN_YEARS_FOR_CAGR = 3  # 年平均成長率は3年以上の期間がある場合だけ計算する
 MAX_HISTORY = 6          # 最大6期（5年間の成長率）
@@ -108,7 +108,8 @@ def build(conn: sqlite3.Connection, code: str, as_of: date, price: float | None,
         v["forecast_op_growth"] = (fc["forecast_operating_profit"] / op_last - 1) if op_last > 0 else None
     v["forecast_op"] = fc["forecast_operating_profit"]
     # 1株あたりの値は、決算公表後の株式分割を補正して現在の基準にそろえる
-    adj_after = 1 / split_ratio(conn, code, (lf or cur)["disclosed_at"], as_of.isoformat())
+    fc_row = lf if (lf and lf.get("forecast_eps") is not None) else cur
+    adj_after = forecast_split_factor(conn, code, fc_row, as_of)
     v["forecast_eps"] = fc["forecast_eps"] * adj_after if fc["forecast_eps"] else None
     v["forecast_dps"] = fc["forecast_dividend"] * adj_after if fc["forecast_dividend"] is not None else None
     v["latest_eps"] = cur["eps"] * (1 / split_ratio(conn, code, cur["disclosed_at"], as_of.isoformat())) if cur["eps"] else None
@@ -137,7 +138,11 @@ def build(conn: sqlite3.Connection, code: str, as_of: date, price: float | None,
         expected = {"1Q": 0.25, "2Q": 0.5, "3Q": 0.75}[q["period_type"]]
         v["progress_gap"] = q["operating_profit"] / q["forecast_operating_profit"] - expected
     since_d = (as_of - timedelta(days=120)).isoformat()
+    obs = disclosure_observed(conn, code, as_of)
     for cat in ("revision_down", "revision_up", "offering"):
+        if not obs["revision" if cat.startswith("revision") else "offering"]:
+            v[f"disc_{cat}_120d"] = None  # 観測していない（0件扱いにしない）
+            continue
         v[f"disc_{cat}_120d"] = conn.execute(
             "SELECT COUNT(*) FROM disclosures WHERE code=? AND category=? AND disclosed_at>? AND disclosed_at<=?",
             (code, cat, since_d, cutoff_of(as_of))).fetchone()[0]

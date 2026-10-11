@@ -71,6 +71,8 @@ def _edinet_disclosures(conn: sqlite3.Connection, d: date, codes: list[str], run
                      (run_tag, "edinet", d.isoformat(), "unavailable", str(e), now_iso()))
         conn.commit()
         return
+    conn.execute("INSERT INTO fetch_log (run_id, source, target, status, message, fetched_at) VALUES (?,?,?,?,?,?)",
+                 (run_tag, "edinet", d.isoformat(), "ok", f"{len(docs)} docs", now_iso()))
     by_code: dict[str, list[dict[str, Any]]] = {}
     for doc in docs:
         by_code.setdefault(doc["code"], []).append(doc)

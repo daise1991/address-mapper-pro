@@ -19,7 +19,7 @@ from .universe import active_codes
 
 # 計算方式のバージョン。採点ロジックを変えたら必ず上げる（変更前の結果は scores_archive に残る）。
 # 配点・判定閾値の変更は rules:<ID> 部分が変わることで区別される
-METHOD_VERSION = "2026.10-v4"  # v2: 景気循環株の自動推計を正常化利益に変更 / v3: 調査前提の3シナリオと評価段階 / v4: 株式分割を希薄化と誤判定しない
+METHOD_VERSION = "2026.10-v4.4"  # v4.4: 景気連動の自動推計（赤字年でも正常化・売上急拡大は利益率で正常化・予想純利益の補完）、売りは項目不足でも下方修正・増資80点以上なら0.8倍を暫定点（2026-10-11 経営者承認） / v4.3: 計算処理の修正（観測していない開示を0件扱いにしない・未評価の理由を具体化。式・配点は v4 と同じ） / v4.2: 計算処理の修正（景気連動株の正常化EPSで、決算後の株式分割を株数に反映。式・配点は v4 と同じ） / v4.1: 計算処理の修正（分割後の基準で出た予想EPSを二重に分割補正しない。式・配点は v4 と同じ） / v2: 景気循環株の自動推計を正常化利益に変更 / v3: 調査前提の3シナリオと評価段階 / v4: 株式分割を希薄化と誤判定しない
 
 
 def version_label(weights: dict[str, dict[str, float]]) -> str:
@@ -66,6 +66,22 @@ def _growth_drop(conn: sqlite3.Connection, code: str, d: date, current: int | No
     return max(0.0, r["growth_score"] - current) if r else None
 
 
+
+def _unrated_detail(conn: sqlite3.Connection, code: str, d: date) -> dict[str, Any]:
+    kind, why = assumptions.unrated_reason(conn, code, d)
+    return {"reason": why, "unrated_kind": kind}
+
+
+def scoring_assumption(conn: sqlite3.Connection, code: str, d: date) -> tuple[Any, str, str, Any, dict[str, Any] | None]:
+    """v4 の採点に使う前提を選ぶ（調査前提 base → 登録済み → 自動初期推計の順）。explain も同じものを使う。"""
+    sa = research.scenario_assumptions(conn, code, d)
+    if sa:
+        return sa["assumptions"]["base"], "research", sa["research"]["status"], sa["research"]["confidence"], sa
+    a, origin = assumptions.resolve(conn, code, d)
+    # 利用者が画面で登録した前提は検証済み、自動初期推計・未登録は前提未確認
+    return a, origin, ("verified" if (a and origin == "manual") else "unconfirmed"), None, None
+
+
 def score_one(conn: sqlite3.Connection, code: str, d: date, rules: RuleSet,
               weights: dict[str, dict[str, float]] | None = None, table: str = "scores") -> dict[str, Any]:
     """table="scores_watch" は監視枠（正式な監視銘柄以外）の並行採点。計算方式は同じで、保存先だけ分ける。"""
@@ -78,19 +94,13 @@ def score_one(conn: sqlite3.Connection, code: str, d: date, rules: RuleSet,
         price = raw_close["close"]
     ind = compute_all([c for _, c in series]) if price else {}
 
-    sa = research.scenario_assumptions(conn, code, d)
+    a, origin, status, confidence, sa = scoring_assumption(conn, code, d)
     scen: dict[str, Any] = {}
     if sa:
-        a, origin = sa["assumptions"]["base"], "research"
-        status, confidence = sa["research"]["status"], sa["research"]["confidence"]
         for k, sa_k in sa["assumptions"].items():
             v_k = evaluate(sa_k, price, d)
             scen[k] = {"eps": sa_k.eps_forecast or sa_k.normalized_eps, "per": sa_k.assumed_per,
                        "theoretical_value": v_k.theoretical_value, "target_price": v_k.target_price, "buy_score": v_k.buy_score}
-    else:
-        a, origin = assumptions.resolve(conn, code, d)
-        # 利用者が画面で登録した前提は検証済み、自動初期推計・未登録は前提未確認
-        status, confidence = ("verified", None) if (a and origin == "manual") else ("unconfirmed", None)
     val = evaluate(a, price, d)
     target_eps = (a.eps_forecast or a.normalized_eps) if a else None
     years = years_until(a.target_year, d, a.fiscal_month_end) if a else None
@@ -109,7 +119,7 @@ def score_one(conn: sqlite3.Connection, code: str, d: date, rules: RuleSet,
         "growth_score": g["score"], "growth_detail": json.dumps(g, ensure_ascii=False),
         "buy_score": buy, "buy_score_k150": val.buy_score_k150, "buy_status": val.status,
         "buy_detail": json.dumps({
-            **val.to_dict(), "assumption_origin": origin, "assumption_status": status, "confidence": confidence,
+            **val.to_dict(), **(_unrated_detail(conn, code, d) if a is None else {}), "assumption_origin": origin, "assumption_status": status, "confidence": confidence,
             "scenarios": scen, "anchor_ratio": sa["anchor_ratio"] if sa else None,
             "data_issue": research.data_issue_on(conn, code, d),
         }, ensure_ascii=False, default=str),
